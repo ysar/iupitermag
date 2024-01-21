@@ -1,12 +1,11 @@
-
-
-use ndarray::{Array, Ix2, array};
+use ndarray::{array, Array, Ix2};
 
 pub enum InternalField {
     JRM09,
     JRM33,
 }
 
+#[rustfmt::skip]
 impl InternalField {
     pub fn get_coefficients(&self) -> (Array<f64, Ix2>, Array<f64, Ix2>) {
 
