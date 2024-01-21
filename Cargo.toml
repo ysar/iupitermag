@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 lazy_static = "1.4.0"
-ndarray = "0.15.6"
+nalgebra = "0.32.3"
