@@ -1,4 +1,3 @@
-// use ndarray::{Array, Ix2};
 use nalgebra::DMatrix;
 
 pub enum InternalField {

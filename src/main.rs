@@ -3,6 +3,7 @@ extern crate nalgebra;
 
 //use crate::legendre;
 // use std::f64::consts::PI;
+use nalgebra::Vector3;
 
 pub mod coefficients;
 pub mod field;
@@ -38,9 +39,16 @@ fn main() {
 
     println!("{:?}", g[(1, 0)]);
     println!("{:?}", g);
-    let val = field::calc_internal_field(1., 90. * 3.1415 / 180., 0., g, h);
+    let val = field::calc_internal_field(10., 90. * 3.1415 / 180., 0., g, h);
 
-    println!("{:?}, {:?}, {:?}", 1., 90. * 3.1415 / 180., 0.);
+    println!("{:?}, {:?}, {:?}", 10., 90. * 3.1415 / 180., 0.);
     println!("{:?}", val);
-    // p[[0, 0]] = 1.
+    // [[-48487.45378523, -12482.15605242605, -352312.72859993443]]}
+
+    let csmodel = field::CurrentSheetType::Con2020;
+    //let params = csmodel.get_current_sheet_params();
+    let pos = Vector3::new(10., 0., 0.);
+    let b_siii = csmodel.calc_current_sheet_field(pos);
+
+    println!("{:?}", b_siii);
 }
