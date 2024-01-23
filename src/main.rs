@@ -5,7 +5,6 @@ extern crate nalgebra;
 // use std::f64::consts::PI;
 use nalgebra::Vector3;
 
-pub mod coefficients;
 pub mod field;
 pub mod legendre;
 
@@ -34,12 +33,12 @@ fn main() {
     // println!("{}", p);
     // println!("{}", p_diff);
 
-    let type_field = coefficients::InternalField::JRM09;
-    let (g, h) = type_field.get_coefficients();
+    let internal_field = field::InternalField::JRM09;
+    let (g, h) = internal_field.get_coefficients();
 
     println!("{:?}", g[(1, 0)]);
     println!("{:?}", g);
-    let val = field::calc_internal_field(10., 90. * 3.1415 / 180., 0., g, h);
+    let val = internal_field.calc_internal_field(10., 90. * 3.1415 / 180., 0., g, h);
 
     println!("{:?}, {:?}, {:?}", 10., 90. * 3.1415 / 180., 0.);
     println!("{:?}", val);
