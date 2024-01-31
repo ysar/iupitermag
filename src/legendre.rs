@@ -4,7 +4,7 @@ use nalgebra::DMatrix;
 // Returns two ndarrays of size (n_degree + 1, n_degree + 1) containing the
 // coefficient of the polynomial and its derivative (P(n, m) and dP(n, m))
 // at order n and degree m.
-pub fn assoc_legendre_poly(theta: f64, n_degree: usize) -> (DMatrix<f64>, DMatrix<f64>) {
+pub fn assoc_legendre_poly(theta: &f64, n_degree: &usize) -> (DMatrix<f64>, DMatrix<f64>) {
     let n_size = n_degree + 1;
 
     let mut p = DMatrix::from_element(n_size, n_size, 0.);
@@ -39,4 +39,51 @@ pub fn assoc_legendre_poly(theta: f64, n_degree: usize) -> (DMatrix<f64>, DMatri
         dp[(i, i)] = sintheta * dp[(i - 1, i - 1)] + costheta * p[(i - 1, i - 1)];
     }
     (p, dp)
+}
+
+pub fn schmidt_semi_normalization_constants(n_degree: &usize) -> DMatrix<f64> {
+    let mut s = DMatrix::<f64>::from_element(n_degree + 1, n_degree + 1, 1.);
+
+    for i in 1..n_degree + 1 {
+        s[(i, 0)] = s[(i - 1, 0)] * (2 * i - 1) as f64 / i as f64;
+        s[(i, 1)] = s[(i, 0)] * (i as f64 * 2. / (i + 1) as f64).sqrt();
+
+        for j in 2..i + 1 {
+            s[(i, j)] = s[(i, j - 1)] * ((i - j + 1) as f64 / (i + j) as f64).sqrt();
+        }
+    }
+    s // Returns here
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_assoc_legendre_poly() {
+        use nalgebra::DMatrix;
+        use crate::legendre;
+
+        let xarr = vec![0., 0.2, 0.4, 0.6, 0.8, 1.0];
+        let val_check = DMatrix::from_vec(
+            6,
+            2,
+            vec![0., 0.2, 0.4, 0.6, 0.8, 1., 1., 0.9798, 0.9165, 0.8, 0.6, 0.],
+        );
+
+        let n = 1;
+        for iarr in 0..6 {
+            println!("x = {:}", xarr[iarr]);
+            println!("val = {:?}", val_check[(iarr, 1)]);
+            let (p, _dp) = legendre::assoc_legendre_poly(&((xarr[iarr] as f64).acos()), &n);
+            let s = legendre::schmidt_semi_normalization_constants(&n);
+
+            for j in 0..2 {
+                assert!(
+                    val_check[(iarr, j)] - p[(1, j)] * s[(1, j)] < 1e-5,
+                    "Assoc. Legendre Poly. Test Failed: \n Calculated {:?}, Expected {:?}",
+                    p[(1, j)] * s[(1, j)],
+                    val_check[(iarr, j)]
+                );
+            }
+        }
+    }
 }

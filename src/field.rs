@@ -8,18 +8,18 @@ pub enum InternalField {
     JRM33,
 }
 
-#[rustfmt::skip]
 impl InternalField {
+    #[rustfmt::skip]
     pub fn get_coefficients(&self) -> (DMatrix<f64>, DMatrix<f64>) {
 
         // Ideally these would be global constants but I cannot find a way to 
         // do that because of limits of FixedInitializer. So I have to construct 
         // the array first and then populate it with actual values. Then I have to 
         // get the values using this function. I feel like this is a bit 
-        // inconvenient.
+        // inconvenient.`
 
         // G_JRM09
-        let mut g_jrm09 = DMatrix::from_row_slice(11, 11, &[
+        let g_jrm09 = DMatrix::from_row_slice(11, 11, &[
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         410244.7, -71498.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         11670.4, -56835.8, 48689.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -34,7 +34,7 @@ impl InternalField {
         ]);
 
         // H_JRM09
-        let mut h_jrm09 = DMatrix::from_row_slice(11, 11, &[
+        let h_jrm09 = DMatrix::from_row_slice(11, 11, &[
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 21330.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, -42027.3, 19353.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -49,7 +49,7 @@ impl InternalField {
         ]);
 
         // G_JRM33
-        let mut g_jrm33 = DMatrix::from_row_slice(31, 31, &[
+        let g_jrm33 = DMatrix::from_row_slice(31, 31, &[
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         410993.4, -71305.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         11796.7, -56972.4, 48250.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -84,7 +84,7 @@ impl InternalField {
         ]);
 
         // H_JRM33
-        let mut h_jrm33 = DMatrix::from_row_slice(31, 31, &[
+        let h_jrm33 = DMatrix::from_row_slice(31, 31, &[
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 20958.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, -42549.0, 20221.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -125,21 +125,12 @@ impl InternalField {
 
         // Normalize the coefficients here rather than in the calculation
         let n_degree = g.nrows() - 1;
-        let mut s = DMatrix::<f64>::from_element(n_degree + 1, n_degree + 1, 1.);
+        let s = legendre::schmidt_semi_normalization_constants(&n_degree);
 
         for i in 1..n_degree + 1 {
-            s[(i, 0)] = s[(i - 1, 0)] * (2 * i  - 1) as f64;
-            s[(i, 1)] = s[(i, 0)] * (i as f64 * 2. / (i + 1) as f64).sqrt();
-
-            g[(i, 0)] *= s[(i, 0)];
-            h[(i, 0)] *= s[(i, 0)];
-            g[(i, 1)] *= s[(i, 1)];
-            h[(i, 1)] *= s[(i, 1)];
-
-            for j in 2..i + 1 {
-                s[(i, j)] = s[(i, j - 1)] * ((i - j + 1) as f64 / (i + j) as f64).sqrt();
-                g[(i, j)] *= g[(i, j)];
-                h[(i, j)] *= h[(i, j)];
+            for j in 0..i + 1 {
+                g[(i, j)] *= s[(i, j)];
+                h[(i, j)] *= s[(i, j)];
             }
         }
         (g, h)
@@ -154,75 +145,74 @@ impl InternalField {
         h: DMatrix<f64>,
     ) -> Vector3<f64> {
         //
-    
+
         let mut b_r: f64 = 0.;
         let mut b_theta: f64 = 0.;
         let mut b_phi: f64 = 0.;
-    
+
         let a: f64 = 1. / r;
-    
+
         assert!((g.nrows() == g.ncols()) && (h.nrows() == h.ncols()));
-    
+
         let n_degree = g.nrows() - 1;
-        let (p, dp) = legendre::assoc_legendre_poly(theta, n_degree);
-    
+        let (p, dp) = legendre::assoc_legendre_poly(&theta, &n_degree);
+
         let sintheta: f64 = theta.sin();
         let costheta: f64 = theta.cos();
         let sinphi: f64 = phi.sin();
         let cosphi: f64 = phi.cos();
-    
+
         let inv_sintheta: f64 = if sintheta.abs() > 1e-9 {
             1. / sintheta
         } else {
             0.
         };
-    
+
         let mut sinphi_prev: f64;
         let mut cosphi_prev: f64;
         let mut sin_mphi: f64;
         let mut cos_mphi: f64;
-    
+
         for i in 0..n_degree + 1 {
             sinphi_prev = 0.;
             cosphi_prev = 1.;
-    
+
             let i_i32 = i32::try_from(i).unwrap();
-    
+
             b_r += a.powi(i_i32 + 2) * (i + 1) as f64 * p[(i, 0)] * g[(i, 0)];
             b_theta -= a.powi(i_i32 + 2) * dp[(i, 0)] * g[(i, 0)];
-    
+
             for j in 1..i + 1 {
                 sin_mphi = sinphi_prev * cosphi + cosphi_prev * sinphi;
                 cos_mphi = cosphi_prev * cosphi - sinphi_prev * sinphi;
-    
+
                 b_r += a.powi(i_i32 + 2)
                     * (i + 1) as f64
                     * p[(i, j)]
                     * (g[(i, j)] * cos_mphi + h[(i, j)] * sin_mphi);
-    
+
                 b_theta -=
                     a.powi(i_i32 + 2) * dp[(i, j)] * (g[(i, j)] * cos_mphi + h[(i, j)] * sin_mphi);
-    
+
                 b_phi += inv_sintheta
                     * a.powi(i_i32 + 2)
                     * p[(i, j)]
                     * j as f64
                     * (g[(i, j)] * sin_mphi - h[(i, j)] * cos_mphi);
-    
+
                 sinphi_prev = sin_mphi;
                 cosphi_prev = cos_mphi;
             }
         }
-    
+
         // return array of bx, by, bz
         Vector3::new(
             (b_r * sintheta * cosphi) + (b_theta * costheta * cosphi) - b_phi * sinphi,
             (b_r * sintheta * sinphi) + (b_theta * costheta * sinphi) + b_phi * cosphi,
             (b_r * costheta) - (b_theta * sintheta),
         )
-    }    
+    }
 }
-
 
 pub struct CurrentSheetParameters {
     r_0: f64,
@@ -332,4 +322,29 @@ fn rotate_vector_mag2iau(v_in: Vector3<f64>, params: &CurrentSheetParameters) ->
     Rotation3::from_axis_angle(&axis_z, params.phi_d)
         * Rotation3::from_axis_angle(&axis_y, params.theta_d)
         * v_in
+}
+
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_calc_internal_field() {
+        use crate::field;
+        use nalgebra::Vector3;
+        use std::f64::consts::PI;
+
+        let internal_field = field::InternalField::JRM09;
+        let (g, h) = internal_field.get_coefficients();
+
+        let val = internal_field.calc_internal_field(10., 0.5 * PI, 0., g, h);
+
+        let val_test = Vector3::new(-131.37542382, -24.2054895, -400.63750836);
+
+        assert!(
+            (val - val_test).norm() < 1e-2,
+            "Internal Field Test Fail: \n Calculated {:?}, Expected {:?}",
+            val,
+            val_test
+        );
+    }
 }
