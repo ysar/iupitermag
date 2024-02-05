@@ -201,8 +201,8 @@ impl InternalField {
             }
         }
 
-        if b_theta.is_nan() {
-            b_theta = 0.; // Should set this to zero to not mess up cartesian conversion later.
+        if b_phi.is_nan() {
+            b_phi= 0.; // Should set this to zero to not mess up cartesian conversion later.
         }
 
         // return array of bx, by, bz
