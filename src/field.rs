@@ -1,7 +1,8 @@
 use crate::legendre;
-use nalgebra::{DMatrix, Rotation3, Vector3};
-use std::f64::consts::PI;
-// use ndarray::{array, Array, Ix1, Ix2};
+//use nalgebra::{DMatrix, Rotation3, Vector3};
+use numpy::ndarray::{Array1, Array2, ArrayView2};
+// use std::f64::consts::PI;
+// use numpy::ndarray::{array, Array, Ix1, Ix2};
 
 pub enum InternalField {
     JRM09,
@@ -10,7 +11,7 @@ pub enum InternalField {
 
 impl InternalField {
     #[rustfmt::skip]
-    pub fn get_coefficients(&self) -> (DMatrix<f64>, DMatrix<f64>) {
+    pub fn get_coefficients(&self) -> (Array2<f64>, Array2<f64>) {
 
         // Ideally these would be global constants but I cannot find a way to 
         // do that because of limits of FixedInitializer. So I have to construct 
@@ -19,7 +20,7 @@ impl InternalField {
         // inconvenient.`
 
         // G_JRM09
-        let g_jrm09 = DMatrix::from_row_slice(11, 11, &[
+        let g_jrm09 = Array2::<f64>::from_shape_vec((11, 11), vec![
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         410244.7, -71498.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         11670.4, -56835.8, 48689.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -31,10 +32,10 @@ impl InternalField {
         10059.2, 1934.4, -6702.9, 153.7, -4124.2, -867.2, -3740.6, -732.4, -2433.2, 0.0, 0.0,
         9671.8, -3046.2, 260.9, 2071.3, 3329.6, -2523.1, 1787.1, -1148.2, 1276.5, -1976.8, 0.0,
         -2299.5, 2009.7, 2127.8, 3498.3, 2967.6, 16.3, 1806.5, -46.5, 2897.8, 574.5, 1298.9,
-        ]);
+        ]).unwrap();
 
         // H_JRM09
-        let h_jrm09 = DMatrix::from_row_slice(11, 11, &[
+        let h_jrm09 = Array2::<f64>::from_shape_vec((11, 11), vec![
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 21330.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, -42027.3, 19353.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -46,10 +47,10 @@ impl InternalField {
         0.0, -2409.7, -11614.6, 9287.0, -911.9, 2754.5, -2446.1, 1207.3, -2887.3, 0.0, 0.0,
         0.0, -8467.4, -1383.8, 5697.7, -2056.3, 3081.5, -721.2, 1352.5, -210.1, 1567.6, 0.0,
         0.0, -4692.6, 4445.8, -2378.6, -2204.3, 164.1, -1361.6, -2031.5, 1411.8, -714.3, 1676.5,
-        ]);
+        ]).unwrap();
 
         // G_JRM33
-        let g_jrm33 = DMatrix::from_row_slice(31, 31, &[
+        let g_jrm33 = Array2::<f64>::from_shape_vec((31, 31), vec![
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         410993.4, -71305.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         11796.7, -56972.4, 48250.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -81,10 +82,10 @@ impl InternalField {
         -66.8, -19.6, -3.9, 27.8, -9.3, -6.2, -12.2, -6.2, 16.7, -9.1, 17.8, 34.2, -0.4, -30.6, -3.2, 2.9, 1.7, -19.7, 2.2, 16.7, -20.5, -3.5, 9.8, 7.6, 12.8, -35.4, 43.7, 10.5, -23.6, 0.0, 0.0,
         15.3, -22.2, 8.2, 5.4, -10.1, -4.4, -13.1, -6.5, 3.0, 4.2, -19.7, 13.2, 1.2, 6.9, -7.7, -1.8, 6.1, -27.1, -11.2, 40.6, 8.1, -14.3, 23.9, 11.5, 2.0, -9.8, 5.2, 4.1, 42.8, 5.3, 0.0,
         32.2, -0.1, 8.0, -12.8, -0.8, -4.6, -3.2, 0.8, -5.9, 4.4, -14.3, -9.4, 8.0, 16.1, -3.3, 3.6, 3.7, 1.0, -10.9, 4.3, 21.2, -5.4, 0.7, -5.2, -13.0, 5.0, -19.2, -14.3, 32.1, 28.0, 26.9,
-        ]);
+        ]).unwrap();
 
         // H_JRM33
-        let h_jrm33 = DMatrix::from_row_slice(31, 31, &[
+        let h_jrm33 = Array2::<f64>::from_shape_vec((31, 31), vec![
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 20958.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, -42549.0, 20221.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -116,21 +117,21 @@ impl InternalField {
         0.0, -9.5, 37.4, 14.0, -46.1, -2.3, 34.7, -6.7, 21.6, -33.1, 16.6, -0.5, -20.5, -3.9, -16.5, 14.5, 20.4, -14.2, 15.7, -12.9, -11.8, -42.8, -8.6, 27.4, -67.5, -2.2, -19.2, 28.9, 79.4, 0.0, 0.0,
         0.0, -23.6, 13.4, 0.8, 9.2, -9.7, 17.2, 11.0, 4.0, 14.7, 13.9, -2.4, -28.1, -21.7, 1.6, 1.5, -9.8, -21.9, 26.9, -15.6, -12.6, -28.6, 8.0, 25.6, -11.0, -10.3, -17.9, 2.0, 5.8, 40.6, 0.0,
         0.0, -1.0, -10.2, -8.8, 29.1, -2.4, -10.4, 6.7, -4.9, 16.9, 2.3, -1.6, -3.2, -14.0, 8.2, 0.5, -9.8, -4.4, 6.2, -5.8, -4.7, 0.1, 10.2, -3.4, 9.9, -2.5, -11.7, -10.5, -21.5, 14.6, 38.3,
-        ]);
+        ]).unwrap();
 
-        let (mut g, mut h) = match &self {
+        let (mut g, mut h) : (Array2<f64>, Array2<f64>) = match &self {
             InternalField::JRM09 => (g_jrm09, h_jrm09),
             InternalField::JRM33 => (g_jrm33, h_jrm33)
         };
 
         // Normalize the coefficients here rather than in the calculation
-        let n_degree = g.nrows() - 1;
-        let s = legendre::schmidt_semi_normalization_constants(&n_degree);
+        let max_degree = g.nrows()- 1;
+        let s = legendre::schmidt_semi_normalization_constants(&max_degree);
 
-        for i in 1..n_degree + 1 {
+        for i in 1..max_degree + 1 {
             for j in 0..i + 1 {
-                g[(i, j)] *= s[(i, j)];
-                h[(i, j)] *= s[(i, j)];
+                g[[i, j]] *= s[[i, j]];
+                h[[i, j]] *= s[[i, j]];
             }
         }
         (g, h)
@@ -141,9 +142,10 @@ impl InternalField {
         r: f64,
         theta: f64,
         phi: f64,
-        g: DMatrix<f64>,
-        h: DMatrix<f64>,
-    ) -> Vector3<f64> {
+        g: ArrayView2<f64>,
+        h: ArrayView2<f64>,
+        degree: usize,
+    ) -> Array1<f64> {
         //
 
         let mut b_r: f64 = 0.;
@@ -154,33 +156,27 @@ impl InternalField {
 
         assert!((g.nrows() == g.ncols()) && (h.nrows() == h.ncols()));
 
-        let n_degree = g.nrows() - 1;
-        let (p, dp) = legendre::assoc_legendre_poly(&theta, &n_degree);
+        let (p, dp) = legendre::assoc_legendre_poly(&theta, &degree);
 
         let sintheta: f64 = theta.sin();
-        let costheta: f64 = theta.cos();
         let sinphi: f64 = phi.sin();
         let cosphi: f64 = phi.cos();
 
-        let inv_sintheta: f64 = if sintheta.abs() > 1e-9 {
-            1. / sintheta
-        } else {
-            0.
-        };
+        let inv_sintheta: f64 = 1. / sintheta; // nan if zero, thats fine.
 
         let mut sinphi_prev: f64;
         let mut cosphi_prev: f64;
         let mut sin_mphi: f64;
         let mut cos_mphi: f64;
 
-        for i in 0..n_degree + 1 {
+        for i in 0..degree + 1 {
             sinphi_prev = 0.;
             cosphi_prev = 1.;
 
             let i_i32 = i32::try_from(i).unwrap();
 
-            b_r += a.powi(i_i32 + 2) * (i + 1) as f64 * p[(i, 0)] * g[(i, 0)];
-            b_theta -= a.powi(i_i32 + 2) * dp[(i, 0)] * g[(i, 0)];
+            b_r += a.powi(i_i32 + 2) * (i + 1) as f64 * p[[i, 0]] * g[[i, 0]];
+            b_theta -= a.powi(i_i32 + 2) * dp[[i, 0]] * g[[i, 0]];
 
             for j in 1..i + 1 {
                 sin_mphi = sinphi_prev * cosphi + cosphi_prev * sinphi;
@@ -188,163 +184,164 @@ impl InternalField {
 
                 b_r += a.powi(i_i32 + 2)
                     * (i + 1) as f64
-                    * p[(i, j)]
-                    * (g[(i, j)] * cos_mphi + h[(i, j)] * sin_mphi);
+                    * p[[i, j]]
+                    * (g[[i, j]] * cos_mphi + h[[i, j]] * sin_mphi);
 
                 b_theta -=
-                    a.powi(i_i32 + 2) * dp[(i, j)] * (g[(i, j)] * cos_mphi + h[(i, j)] * sin_mphi);
+                    a.powi(i_i32 + 2) * dp[[i, j]] * (g[[i, j]] * cos_mphi + h[[i, j]] * sin_mphi);
 
                 b_phi += inv_sintheta
                     * a.powi(i_i32 + 2)
-                    * p[(i, j)]
+                    * p[[i, j]]
                     * j as f64
-                    * (g[(i, j)] * sin_mphi - h[(i, j)] * cos_mphi);
+                    * (g[[i, j]] * sin_mphi - h[[i, j]] * cos_mphi);
 
                 sinphi_prev = sin_mphi;
                 cosphi_prev = cos_mphi;
             }
         }
 
+        if b_theta.is_nan() {
+            b_theta = 0.; // Should set this to zero to not mess up cartesian conversion later.
+        }
+
         // return array of bx, by, bz
-        Vector3::new(
-            (b_r * sintheta * cosphi) + (b_theta * costheta * cosphi) - b_phi * sinphi,
-            (b_r * sintheta * sinphi) + (b_theta * costheta * sinphi) + b_phi * cosphi,
-            (b_r * costheta) - (b_theta * sintheta),
-        )
+        Array1::from_vec(vec![b_r, b_theta, b_phi])
     }
 }
 
-pub struct CurrentSheetParameters {
-    r_0: f64,
-    r_1: f64,
-    d: f64,
-    mu0_i_2: f64,
-    theta_d: f64,
-    phi_d: f64,
-}
+// pub struct CurrentSheetParameters {
+//     r_0: f64,
+//     r_1: f64,
+//     d: f64,
+//     mu0_i_2: f64,
+//     theta_d: f64,
+//     phi_d: f64,
+// }
 
-pub enum CurrentSheetType {
-    Con2020,
-}
+// pub enum CurrentSheetType {
+//     Con2020,
+// }
 
-impl CurrentSheetType {
-    pub fn get_current_sheet_params(&self) -> CurrentSheetParameters {
-        match &self {
-            CurrentSheetType::Con2020 => CurrentSheetParameters {
-                r_0: 7.8,
-                r_1: 51.4,
-                d: 3.6,
-                mu0_i_2: 139.6,
-                theta_d: 9.3 * PI / 180.,
-                phi_d: 204.2 * PI / 180.,
-            },
-        }
-    }
+// impl CurrentSheetType {
+//     pub fn get_current_sheet_params(&self) -> CurrentSheetParameters {
+//         match &self {
+//             CurrentSheetType::Con2020 => CurrentSheetParameters {
+//                 r_0: 7.8,
+//                 r_1: 51.4,
+//                 d: 3.6,
+//                 mu0_i_2: 139.6,
+//                 theta_d: 9.3 * PI / 180.,
+//                 phi_d: 204.2 * PI / 180.,
+//             },
+//         }
+//     }
 
-    pub fn calc_current_sheet_field_cylind(
-        &self,
-        rho: f64,
-        z: f64,
-        params: &CurrentSheetParameters,
-    ) -> (f64, f64) {
-        if ((rho - params.r_0) <= 2.) && (z.abs() <= params.d * 1.5) {
-            let denom_neg: f64 = (params.r_0.powi(2) + (z - params.d).powi(2)).sqrt();
-            let denom_pos: f64 = (params.r_0.powi(2) + (z + params.d).powi(2)).sqrt();
-            let numer_neg: f64 = params.r_0.powi(2) - 2. * (z - params.d).powi(2);
-            let numer_pos: f64 = params.r_0.powi(2) - 2. * (z + params.d).powi(2);
+//     pub fn calc_current_sheet_field_cylind(
+//         &self,
+//         rho: f64,
+//         z: f64,
+//         params: &CurrentSheetParameters,
+//     ) -> (f64, f64) {
+//         if ((rho - params.r_0) <= 2.) && (z.abs() <= params.d * 1.5) {
+//             let denom_neg: f64 = (params.r_0.powi(2) + (z - params.d).powi(2)).sqrt();
+//             let denom_pos: f64 = (params.r_0.powi(2) + (z + params.d).powi(2)).sqrt();
+//             let numer_neg: f64 = params.r_0.powi(2) - 2. * (z - params.d).powi(2);
+//             let numer_pos: f64 = params.r_0.powi(2) - 2. * (z + params.d).powi(2);
 
-            // b_r
-            (
-                params.mu0_i_2
-                    * ((rho / 2.) * (1. / denom_neg - 1. / denom_pos)
-                        + rho.powi(3) / 16.
-                            * (numer_neg / denom_neg.powf(2.5) - numer_pos / denom_pos.powf(2.5))),
-                // b_z
-                params.mu0_i_2
-                    * (((z + params.d + denom_pos) / (z - params.d + denom_neg)).ln()
-                        + rho.powi(2) / 4.
-                            * ((z + params.d) / denom_pos.powf(1.5)
-                                - (z - params.d) / denom_neg.powf(1.5))),
-            )
-        } else {
-            let _cond_statement = if z.abs() <= params.d {
-                z * (2. / rho)
-            } else {
-                z.signum() * params.d * (2. / rho)
-            };
+//             // b_r
+//             (
+//                 params.mu0_i_2
+//                     * ((rho / 2.) * (1. / denom_neg - 1. / denom_pos)
+//                         + rho.powi(3) / 16.
+//                             * (numer_neg / denom_neg.powf(2.5) - numer_pos / denom_pos.powf(2.5))),
+//                 // b_z
+//                 params.mu0_i_2
+//                     * (((z + params.d + denom_pos) / (z - params.d + denom_neg)).ln()
+//                         + rho.powi(2) / 4.
+//                             * ((z + params.d) / denom_pos.powf(1.5)
+//                                 - (z - params.d) / denom_neg.powf(1.5))),
+//             )
+//         } else {
+//             let _cond_statement = if z.abs() <= params.d {
+//                 z * (2. / rho)
+//             } else {
+//                 z.signum() * params.d * (2. / rho)
+//             };
 
-            let denom_neg: f64 = (rho.powi(2) + (z - params.d).powi(2)).sqrt();
-            let denom_pos: f64 = (rho.powi(2) + (z + params.d).powi(2)).sqrt();
+//             let denom_neg: f64 = (rho.powi(2) + (z - params.d).powi(2)).sqrt();
+//             let denom_pos: f64 = (rho.powi(2) + (z + params.d).powi(2)).sqrt();
 
-            // b_r
-            (
-                params.mu0_i_2 * (1. / rho) * (denom_neg - denom_pos)
-                    + rho * params.r_0.powi(2) / 4. * (1. / denom_pos - 1. / denom_neg)
-                    + _cond_statement,
-                // b_z
-                params.mu0_i_2
-                    * (((z + params.d + denom_pos) / (z - params.d + denom_neg)).ln()
-                        + params.r_0.powi(2) / 4.
-                            * ((z + params.d) / denom_pos.powf(1.5)
-                                - (z - params.d) / denom_neg.powf(1.5))),
-            )
-        }
-    }
+//             // b_r
+//             (
+//                 params.mu0_i_2 * (1. / rho) * (denom_neg - denom_pos)
+//                     + rho * params.r_0.powi(2) / 4. * (1. / denom_pos - 1. / denom_neg)
+//                     + _cond_statement,
+//                 // b_z
+//                 params.mu0_i_2
+//                     * (((z + params.d + denom_pos) / (z - params.d + denom_neg)).ln()
+//                         + params.r_0.powi(2) / 4.
+//                             * ((z + params.d) / denom_pos.powf(1.5)
+//                                 - (z - params.d) / denom_neg.powf(1.5))),
+//             )
+//         }
+//     }
 
-    pub fn calc_current_sheet_field(&self, pos: Vector3<f64>) -> Vector3<f64> {
-        let params = self.get_current_sheet_params();
-        let pos_mag = rotate_vector_iau2mag(pos, &params);
+//     pub fn calc_current_sheet_field(&self, pos: Vector3<f64>) -> Vector3<f64> {
+//         let params = self.get_current_sheet_params();
+//         let pos_mag = rotate_vector_iau2mag(pos, &params);
 
-        let rho: f64 = (pos_mag[0].powi(2) + pos_mag[1].powi(2)).sqrt();
-        let z: f64 = pos_mag[2];
+//         let rho: f64 = (pos_mag[0].powi(2) + pos_mag[1].powi(2)).sqrt();
+//         let z: f64 = pos_mag[2];
 
-        let (b_rho, b_z) = self.calc_current_sheet_field_cylind(rho, z, &params);
+//         let (b_rho, b_z) = self.calc_current_sheet_field_cylind(rho, z, &params);
 
-        let phi = pos_mag[1].atan2(pos_mag[0]);
-        let b_mag = Vector3::new(b_rho * phi.cos(), b_rho * phi.sin(), b_z);
-        rotate_vector_mag2iau(b_mag, &params)
-    }
-}
+//         let phi = pos_mag[1].atan2(pos_mag[0]);
+//         let b_mag = Vector3::new(b_rho * phi.cos(), b_rho * phi.sin(), b_z);
+//         rotate_vector_mag2iau(b_mag, &params)
+//     }
+// }
 
-fn rotate_vector_iau2mag(v_in: Vector3<f64>, params: &CurrentSheetParameters) -> Vector3<f64> {
-    let axis_y = Vector3::y_axis();
-    let axis_z = Vector3::z_axis();
+// fn rotate_vector_iau2mag(v_in: Vector3<f64>, params: &CurrentSheetParameters) -> Vector3<f64> {
+//     let axis_y = Vector3::y_axis();
+//     let axis_z = Vector3::z_axis();
 
-    Rotation3::from_axis_angle(&axis_y, -params.theta_d)
-        * Rotation3::from_axis_angle(&axis_z, -params.phi_d)
-        * v_in
-}
+//     Rotation3::from_axis_angle(&axis_y, -params.theta_d)
+//         * Rotation3::from_axis_angle(&axis_z, -params.phi_d)
+//         * v_in
+// }
 
-fn rotate_vector_mag2iau(v_in: Vector3<f64>, params: &CurrentSheetParameters) -> Vector3<f64> {
-    let axis_y = Vector3::y_axis();
-    let axis_z = Vector3::z_axis();
+// fn rotate_vector_mag2iau(v_in: Vector3<f64>, params: &CurrentSheetParameters) -> Vector3<f64> {
+//     let axis_y = Vector3::y_axis();
+//     let axis_z = Vector3::z_axis();
 
-    Rotation3::from_axis_angle(&axis_z, params.phi_d)
-        * Rotation3::from_axis_angle(&axis_y, params.theta_d)
-        * v_in
-}
-
+//     Rotation3::from_axis_angle(&axis_z, params.phi_d)
+//         * Rotation3::from_axis_angle(&axis_y, params.theta_d)
+//         * v_in
+// }
 
 #[cfg(test)]
 mod tests {
     #[test]
     fn test_calc_internal_field() {
         use crate::field;
-        use nalgebra::Vector3;
+        use numpy::ndarray::Array;
         use std::f64::consts::PI;
 
         let internal_field = field::InternalField::JRM09;
         let (g, h) = internal_field.get_coefficients();
 
-        let val = internal_field.calc_internal_field(10., 0.5 * PI, 0., g, h);
+        let val = internal_field.calc_internal_field(10., 0.5 * PI, 0., g.view(), h.view(), 10);
 
-        let val_test = Vector3::new(-131.37542382, -24.2054895, -400.63750836);
+        let val_test = Array::from_vec(vec![-131.37542382178387, 400.6375083598106, -24.205489499871465]);
 
-        assert!(
-            (val - val_test).norm() < 1e-2,
-            "Internal Field Test Fail: \n Calculated {:?}, Expected {:?}",
-            val,
-            val_test
-        );
+        for i in 0..3 {
+            assert!(
+                (val[i] - val_test[i]) < 1e-4,
+                "Internal Field Test Fail: \n Calculated {:?}, Expected {:?}",
+                val,
+                val_test
+            );
+        }
     }
 }
