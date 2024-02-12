@@ -1,4 +1,4 @@
-use numpy::ndarray::Array2;
+use ndarray::Array2;
 
 // Calculate the Gauss-normalized Legendre polynomials.
 // Returns two numpy::ndarrays of size (n_degree + 1, n_degree + 1) containing the
@@ -60,7 +60,7 @@ mod tests {
     #[test]
     fn test_assoc_legendre_poly() {
         use crate::legendre;
-        use numpy::ndarray::Array2;
+        use ndarray::Array2;
 
         let xarr = vec![0., 0.2, 0.4, 0.6, 0.8, 1.0];
         let val_check = Array2::from_shape_vec(

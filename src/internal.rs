@@ -1,6 +1,6 @@
 use crate::legendre;
 //use nalgebra::{DMatrix, Rotation3, Vector3};
-use numpy::ndarray::{Array1, Array2, ArrayView2};
+use ndarray::{Array1, Array2, ArrayView2, Zip};
 // use std::f64::consts::PI;
 // use numpy::ndarray::{array, Array, Ix1, Ix2};
 
@@ -128,12 +128,15 @@ impl InternalField {
         let max_degree = g.nrows()- 1;
         let s = legendre::schmidt_semi_normalization_constants(&max_degree);
 
-        for i in 1..max_degree + 1 {
-            for j in 0..i + 1 {
-                g[[i, j]] *= s[[i, j]];
-                h[[i, j]] *= s[[i, j]];
-            }
-        }
+        Zip::from(&mut g).and(&s).for_each(|x, y| *x *= *y);
+        Zip::from(&mut h).and(&s).for_each(|x, y| *x *= *y);
+
+        // for i in 1..max_degree + 1 {
+        //     for j in 0..i + 1 {
+        //         g[[i, j]] *= s[[i, j]];
+        //         h[[i, j]] *= s[[i, j]];
+        //     }
+        // }
         (g, h)
     }
 
@@ -202,12 +205,53 @@ impl InternalField {
         }
 
         if b_phi.is_nan() {
-            b_phi= 0.; // Should set this to zero to not mess up cartesian conversion later.
+            b_phi = 0.; // Should set this to zero to not mess up cartesian conversion later.
         }
 
         // return array of bx, by, bz
         Array1::from_vec(vec![b_r, b_theta, b_phi])
     }
+}
+
+pub fn calc_arr_internal_field_serial(
+    internal_field: InternalField,
+    positions: ArrayView2<f64>,
+    g: ArrayView2<f64>,
+    h: ArrayView2<f64>,
+    degree: &usize,
+) -> Array2<f64> {
+    let num_points = positions.nrows();
+    let mut result_arr = Array2::<f64>::zeros((num_points, 3));
+
+    for i in 0..num_points {
+        let r = positions[[i, 0]];
+        let theta = positions[[i, 1]];
+        let phi = positions[[i, 2]];
+
+        let val = internal_field.calc_internal_field(r, theta, phi, g, h, *degree);
+
+        (result_arr[[i, 0]], result_arr[[i, 1]], result_arr[[i, 2]]) = (val[0], val[1], val[2]);
+    }
+    result_arr
+}
+
+pub fn calc_arr_internal_field_parallel(
+    internal_field: InternalField,
+    positions: ArrayView2<f64>,
+    g: ArrayView2<f64>,
+    h: ArrayView2<f64>,
+    degree: &usize,
+) -> Array2<f64> {
+    let mut result_arr = Array2::<f64>::zeros((positions.nrows(), 3));
+
+    Zip::from(result_arr.rows_mut())
+        .and(positions.rows())
+        .par_for_each(|mut a, b| {
+            let _tmp = internal_field.calc_internal_field(b[0], b[1], b[2], g, h, *degree);
+            (a[0], a[1], a[2]) = (_tmp[0], _tmp[1], _tmp[2]);
+        });
+
+    result_arr
 }
 
 // pub struct CurrentSheetParameters {
@@ -324,16 +368,20 @@ impl InternalField {
 mod tests {
     #[test]
     fn test_calc_internal_field() {
-        use crate::field;
-        use numpy::ndarray::Array;
+        use crate::internal;
+        use ndarray::Array;
         use std::f64::consts::PI;
 
-        let internal_field = field::InternalField::JRM09;
+        let internal_field = internal::InternalField::JRM09;
         let (g, h) = internal_field.get_coefficients();
 
         let val = internal_field.calc_internal_field(10., 0.5 * PI, 0., g.view(), h.view(), 10);
 
-        let val_test = Array::from_vec(vec![-131.37542382178387, 400.6375083598106, -24.205489499871465]);
+        let val_test = Array::from_vec(vec![
+            -131.37542382178387,
+            400.6375083598106,
+            -24.205489499871465,
+        ]);
 
         for i in 0..3 {
             assert!(

@@ -9,5 +9,6 @@ name = "iupitermag"
 crate-type = ["cdylib"]
 
 [dependencies]
+ndarray = { version = "0.15.6", features = ["rayon"] }
 numpy = "0.20.0"
 pyo3 = { version = "0.20.2", features = ["extension-module"] }
