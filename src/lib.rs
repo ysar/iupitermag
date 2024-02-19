@@ -14,18 +14,12 @@ fn get_planet_field_py<'py>(
     internal_field_type: String,
     is_in_cartesian: bool,
     is_out_cartesian: bool,
-    degree: usize,
 ) -> &'py PyArray2<f64> {
     let positions = pos.as_array();
     let num_points = positions.nrows();
     assert!(positions.ncols() == 3);
 
-    let internal_field = match internal_field_type.as_str() {
-        "JRM09" => internal::InternalField::JRM09,
-        "JRM33" => internal::InternalField::JRM33,
-        _ => panic!("Unknown field type."),
-    };
-    let (g, h) = internal_field.get_coefficients();
+    let internal_field = internal::InternalField::new(&internal_field_type, None, None, None);
 
     let mut positions_rtp: Array2<f64>;
 
@@ -49,24 +43,12 @@ fn get_planet_field_py<'py>(
     let mut result_arr: Array2<f64>;
 
     if num_points > 1000 {
-        result_arr = internal::calc_arr_internal_field_parallel(
-            internal_field,
-            positions.view(),
-            g.view(),
-            h.view(),
-            &degree,
-        );
+        result_arr = internal::calc_arr_internal_field_parallel(internal_field, positions.view());
         if is_out_cartesian {
             result_arr = aux::convert_arr_rtp_to_xyz_parallel(result_arr.view(), positions.view());
         }
     } else {
-        result_arr = internal::calc_arr_internal_field_serial(
-            internal_field,
-            positions.view(),
-            g.view(),
-            h.view(),
-            &degree,
-        );
+        result_arr = internal::calc_arr_internal_field_serial(internal_field, positions.view());
         if is_out_cartesian {
             result_arr = aux::convert_arr_rtp_to_xyz_serial(result_arr.view(), positions.view());
         }
@@ -77,5 +59,6 @@ fn get_planet_field_py<'py>(
 #[pymodule]
 fn iupitermag<'py>(_py: Python<'py>, m: &'py PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(get_planet_field_py, m)?)?;
+    m.add_class::<internal::PyInternalField>()?;
     Ok(())
 }

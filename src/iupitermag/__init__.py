@@ -1,1 +1,1 @@
-from .iupitermag import *
+from .internal import *
