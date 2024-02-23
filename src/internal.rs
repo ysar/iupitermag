@@ -36,13 +36,21 @@ impl PyInternalField {
         }
     }
 
-    pub fn calc_internal_field<'py>(&self, py: Python<'py>, r: f64, theta: f64, phi: f64) -> &'py PyArray1<f64> {
+    pub fn calc_field<'py>(&self, py: Python<'py>, r: f64, theta: f64, phi: f64) -> &'py PyArray1<f64> {
         let result = self._field.calc_internal_field(r, theta, phi);
         result.into_pyarray(py)
     }
 
     pub fn get_coefficients<'py>(&self, py: Python<'py>) -> (&'py PyArray2<f64>, &'py PyArray2<f64>) {
         (self._field.g.clone().into_pyarray(py), self._field.h.clone().into_pyarray(py))
+    }
+
+    pub fn loop_calc_field<'py>(&self, py: Python<'py>, positions: PyReadonlyArray2<f64>) -> &'py PyArray2<f64> {
+        calc_arr_internal_field_serial(&self._field, positions.as_array()).into_pyarray(py)
+    }
+
+    pub fn par_map_calc_field<'py>(&self, py: Python<'py>, positions: PyReadonlyArray2<f64>) -> &'py PyArray2<f64> {
+        calc_arr_internal_field_parallel(&self._field, positions.as_array()).into_pyarray(py)
     }
 
 }
@@ -284,7 +292,7 @@ fn create_jrm33_field() -> InternalField {
 }
 
 pub fn calc_arr_internal_field_serial(
-    internal_field: InternalField,
+    internal_field: &InternalField,
     positions: ArrayView2<f64>,
 ) -> Array2<f64> {
     let num_points = positions.nrows();
@@ -303,7 +311,7 @@ pub fn calc_arr_internal_field_serial(
 }
 
 pub fn calc_arr_internal_field_parallel(
-    internal_field: InternalField,
+    internal_field: &InternalField,
     positions: ArrayView2<f64>,
 ) -> Array2<f64> {
     let mut result_arr = Array2::<f64>::zeros((positions.nrows(), 3));
@@ -311,8 +319,7 @@ pub fn calc_arr_internal_field_parallel(
     Zip::from(result_arr.rows_mut())
         .and(positions.rows())
         .par_for_each(|mut x, y| {
-            let _tmp = internal_field.calc_internal_field(y[0], y[1], y[2]);
-            (x[0], x[1], x[2]) = (_tmp[0], _tmp[1], _tmp[2]);
+            x.assign(&internal_field.calc_internal_field(y[0], y[1], y[2]));
         });
 
     result_arr
@@ -345,4 +352,5 @@ mod tests {
             );
         }
     }
+
 }

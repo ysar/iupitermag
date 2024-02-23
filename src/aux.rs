@@ -1,5 +1,6 @@
 use ndarray::{s, Array1, Array2, ArrayView1, ArrayView2, Zip};
 
+
 pub fn convert_vec_xyz_to_rtp(arr: ArrayView1<f64>) -> Array1<f64> {
     let theta = (arr[2] / (arr[1].powi(2) + arr[0].powi(2)).sqrt()).acos();
     let phi = arr[1].atan2(arr[0]);

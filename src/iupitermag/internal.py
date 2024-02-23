@@ -1,24 +1,36 @@
-from .iupitermag import PyInternalField
+import iupitermag.iupitermag as _iu
 
 class InternalField:
 
     def __init__(self, typefield="", g=None, h=None, degree=None):
         """
+        Class for handling the planet's internal field. 
 
+        Use: Initialize using 
+            InternalField()
+
+        Args:
+            typefield (str): Type of planet field. Allowed values are 
+                "JRM09", "JRM33", "Custom"
+            g (np.array): Legendre coefficient array g[n ,m]
+            h (np.array): Legendre coefficient array h[n, m]
+            degree (int): Degree of field
+
+            g, h, and degree do not need to be specified for non-"Custom" type.
+
+        Returns:
+            InternalField class object
         """
-        self._field = PyInternalField(typefield, g, h, degree)
+        self._field = _iu.PyInternalField(typefield, g, h, degree)
 
     def calc_field(self, r, theta, phi):
-        return self._field.calc_internal_field(r, theta, phi)
+        return self._field.calc_field(r, theta, phi)
     
     def get_coefficients(self):
         return self._field.get_coefficients()
     
-    def set_coefficients(self, g, h):
-        pass
-
     def map_calc_field(self, positions):
-        pass
-
-    def loop_calc_field(self, positions):
-        pass
+        if positions.shape[0] < 2000:
+            return self._field.loop_calc_field(positions)
+        else:
+            return self._field.par_map_calc_field(positions)
