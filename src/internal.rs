@@ -1,6 +1,6 @@
 use crate::legendre;
 use ndarray::{s, Array1, Array2, ArrayView2, Zip};
-use numpy::{PyReadonlyArray2, PyArray1, PyArray2, IntoPyArray};
+use numpy::{IntoPyArray, PyArray1, PyArray2, PyReadonlyArray2};
 use pyo3::{pyclass, pymethods, Python};
 
 #[pyclass]
@@ -15,7 +15,7 @@ impl PyInternalField {
         field_type: &str,
         g_in: Option<PyReadonlyArray2<f64>>,
         h_in: Option<PyReadonlyArray2<f64>>,
-        degree_in: Option<usize>
+        degree_in: Option<usize>,
     ) -> Self {
         let g: Option<Array2<f64>>;
         let h: Option<Array2<f64>>;
@@ -36,23 +36,44 @@ impl PyInternalField {
         }
     }
 
-    pub fn calc_field<'py>(&self, py: Python<'py>, r: f64, theta: f64, phi: f64) -> &'py PyArray1<f64> {
+    pub fn calc_field<'py>(
+        &self,
+        py: Python<'py>,
+        r: f64,
+        theta: f64,
+        phi: f64,
+    ) -> &'py PyArray1<f64> {
         let result = self._field.calc_internal_field(r, theta, phi);
         result.into_pyarray(py)
     }
 
-    pub fn get_coefficients<'py>(&self, py: Python<'py>) -> (&'py PyArray2<f64>, &'py PyArray2<f64>) {
-        (self._field.g.clone().into_pyarray(py), self._field.h.clone().into_pyarray(py))
+    pub fn get_coefficients<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> (&'py PyArray2<f64>, &'py PyArray2<f64>) {
+        let s = legendre::schmidt_semi_normalization_constants(&self._field.degree);
+
+        let g = self._field.g.clone() / &s;
+        let h = self._field.h.clone() / &s;
+
+        (g.into_pyarray(py), h.into_pyarray(py))
     }
 
-    pub fn loop_calc_field<'py>(&self, py: Python<'py>, positions: PyReadonlyArray2<f64>) -> &'py PyArray2<f64> {
+    pub fn loop_calc_field<'py>(
+        &self,
+        py: Python<'py>,
+        positions: PyReadonlyArray2<f64>,
+    ) -> &'py PyArray2<f64> {
         calc_arr_internal_field_serial(&self._field, positions.as_array()).into_pyarray(py)
     }
 
-    pub fn par_map_calc_field<'py>(&self, py: Python<'py>, positions: PyReadonlyArray2<f64>) -> &'py PyArray2<f64> {
+    pub fn par_map_calc_field<'py>(
+        &self,
+        py: Python<'py>,
+        positions: PyReadonlyArray2<f64>,
+    ) -> &'py PyArray2<f64> {
         calc_arr_internal_field_parallel(&self._field, positions.as_array()).into_pyarray(py)
     }
-
 }
 
 pub struct InternalField {
@@ -66,19 +87,19 @@ impl InternalField {
         field_type: &str,
         g_in: Option<Array2<f64>>,
         h_in: Option<Array2<f64>>,
-        degree_in: Option<usize>
+        degree_in: Option<usize>,
     ) -> Self {
         let mut field = match field_type {
             "JRM09" => create_jrm09_field(),
             "JRM33" => create_jrm33_field(),
             "Custom" => {
                 let expectmessage = "g and h are expected for Custom field type.";
-                InternalField {                
+                InternalField {
                     g: g_in.expect(expectmessage),
                     h: h_in.expect(expectmessage),
                     degree: 0,
                 }
-            },
+            }
             _ => panic!("Unknown field_type: Supported (JRM09, JRM33, Custom)"),
         };
 
@@ -93,13 +114,6 @@ impl InternalField {
         field = field.normalize_coefficients();
         field
     }
-
-    // fn truncate_to_degree(mut self, degree_in: usize) -> Self {
-    //     self.g = self.g.slice_move(s![..degree_in + 1, ..degree_in + 1]);
-    //     self.h = self.h.slice_move(s![..degree_in + 1, ..degree_in + 1]);
-    //     self.degree = degree_in;
-    //     self
-    // }
 
     fn normalize_coefficients(mut self) -> Self {
         // Normalize the coefficients here rather than in the calculation
@@ -295,18 +309,14 @@ pub fn calc_arr_internal_field_serial(
     internal_field: &InternalField,
     positions: ArrayView2<f64>,
 ) -> Array2<f64> {
-    let num_points = positions.nrows();
-    let mut result_arr = Array2::<f64>::zeros((num_points, 3));
+    let mut result_arr = Array2::<f64>::zeros((positions.nrows(), 3));
 
-    for i in 0..num_points {
-        let r = positions[[i, 0]];
-        let theta = positions[[i, 1]];
-        let phi = positions[[i, 2]];
+    Zip::from(result_arr.rows_mut())
+        .and(positions.rows())
+        .for_each(|mut x, y| {
+            x.assign(&internal_field.calc_internal_field(y[0], y[1], y[2]));
+        });
 
-        let val = internal_field.calc_internal_field(r, theta, phi);
-
-        (result_arr[[i, 0]], result_arr[[i, 1]], result_arr[[i, 2]]) = (val[0], val[1], val[2]);
-    }
     result_arr
 }
 
@@ -352,5 +362,4 @@ mod tests {
             );
         }
     }
-
 }

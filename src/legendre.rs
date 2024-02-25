@@ -1,15 +1,15 @@
 use ndarray::Array2;
 
 // Calculate the Gauss-normalized Legendre polynomials.
-// Returns two numpy::ndarrays of size (n_degree + 1, n_degree + 1) containing the
+// Returns two numpy::ndarrays of size (degree + 1, degree + 1) containing the
 // coefficient of the polynomial and its derivative (P(n, m) and dP(n, m))
 // at order n and degree m.
-pub fn assoc_legendre_poly(theta: &f64, n_degree: &usize) -> (Array2<f64>, Array2<f64>) {
-    let n_size = n_degree + 1;
+pub fn assoc_legendre_poly(theta: &f64, degree: &usize) -> (Array2<f64>, Array2<f64>) {
+    let size = degree + 1;
 
-    let mut p = Array2::<f64>::zeros((n_size, n_size));
-    let mut dp = Array2::<f64>::zeros((n_size, n_size));
-    let mut k = Array2::<f64>::zeros((n_size, n_size));
+    let mut p = Array2::<f64>::zeros((size, size));
+    let mut dp = Array2::<f64>::zeros((size, size));
+    let mut k = Array2::<f64>::zeros((size, size));
 
     let sintheta = theta.sin();
     let costheta = theta.cos();
@@ -24,7 +24,7 @@ pub fn assoc_legendre_poly(theta: &f64, n_degree: &usize) -> (Array2<f64>, Array
     dp[[1, 0]] = costheta * dp[[0, 0]] - sintheta * p[[0, 0]];
 
     // General cases
-    for i in 2..n_size {
+    for i in 2..size {
         for j in 0..i {
             k[[i, j]] = ((i - 1).pow(2) - j.pow(2)) as f64 / ((2 * i - 1) * (2 * i - 3)) as f64;
 

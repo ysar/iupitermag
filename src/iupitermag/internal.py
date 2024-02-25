@@ -23,11 +23,32 @@ class InternalField:
         """
         self._field = _iu.PyInternalField(typefield, g, h, degree)
 
+
     def calc_field(self, r, theta, phi):
+        """
+        Calculate the field strength at a location defined in a spherical 
+        planetocentric coordinate system.
+
+        Args:
+            r (float): Radius in planetary radii
+            theta (float): Co-latitude in radians
+            phi (float): Azimuth in radians
+
+        Returns:
+            field (np.array): Magnetic field components [Br, Btheta, Bphi]
+        """
         return self._field.calc_field(r, theta, phi)
-    
+
+
     def get_coefficients(self):
+        """
+        Get the coeffiicients of the defined internal field. 
+
+        Returns:
+            (g, h) (np.array, np.array): Legendre coefficients in units of nT
+        """
         return self._field.get_coefficients()
+    
     
     def map_calc_field(self, positions):
         if positions.shape[0] < 2000:
