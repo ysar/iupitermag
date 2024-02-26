@@ -99,7 +99,7 @@ impl InternalField {
                     h: h_in.expect(expectmessage),
                     degree: 0,
                 }
-            }
+            },
             _ => panic!("Unknown field_type: Supported (JRM09, JRM33, Custom)"),
         };
 
@@ -118,8 +118,8 @@ impl InternalField {
     fn normalize_coefficients(mut self) -> Self {
         // Normalize the coefficients here rather than in the calculation
         let s = legendre::schmidt_semi_normalization_constants(&self.degree);
-        self.g = self.g * &s;
-        self.h = self.h * &s;
+        self.g *= &s;
+        self.h *= &s;
         self
     }
 
