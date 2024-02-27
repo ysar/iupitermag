@@ -1,4 +1,6 @@
 pub mod aux;
+pub mod currentsheet;
+pub mod field;
 pub mod internal;
 pub mod legendre;
 

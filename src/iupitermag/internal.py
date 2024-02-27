@@ -51,7 +51,7 @@ class InternalField:
     
     
     def map_calc_field(self, positions):
-        if positions.shape[0] < 2000:
-            return self._field.loop_calc_field(positions)
-        else:
-            return self._field.par_map_calc_field(positions)
+        return self._field.map_calc_field(positions)
+    
+    def parmap_calc_field(self, positions):
+        return self._field.parmap_calc_field(positions)

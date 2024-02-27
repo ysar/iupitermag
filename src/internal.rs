@@ -1,7 +1,9 @@
-use crate::legendre;
-use ndarray::{s, Array1, Array2, ArrayView2, Zip};
+use ndarray::{s, ArcArray2, Array1, Array2};
 use numpy::{IntoPyArray, PyArray1, PyArray2, PyReadonlyArray2};
 use pyo3::{pyclass, pymethods, Python};
+
+use crate::field::Field;
+use crate::legendre;
 
 #[pyclass]
 pub struct PyInternalField {
@@ -43,7 +45,7 @@ impl PyInternalField {
         theta: f64,
         phi: f64,
     ) -> &'py PyArray1<f64> {
-        let result = self._field.calc_internal_field(r, theta, phi);
+        let result = self._field.calc_field(r, theta, phi);
         result.into_pyarray(py)
     }
 
@@ -53,32 +55,37 @@ impl PyInternalField {
     ) -> (&'py PyArray2<f64>, &'py PyArray2<f64>) {
         let s = legendre::schmidt_semi_normalization_constants(&self._field.degree);
 
-        let g = self._field.g.clone() / &s;
-        let h = self._field.h.clone() / &s;
+        let g = self._field.g.to_owned() / &s;
+        let h = self._field.h.to_owned() / &s;
 
         (g.into_pyarray(py), h.into_pyarray(py))
     }
 
-    pub fn loop_calc_field<'py>(
+    pub fn map_calc_field<'py>(
         &self,
         py: Python<'py>,
         positions: PyReadonlyArray2<f64>,
     ) -> &'py PyArray2<f64> {
-        calc_arr_internal_field_serial(&self._field, positions.as_array()).into_pyarray(py)
+        self._field
+            .map_calc_field(positions.as_array())
+            .into_pyarray(py)
     }
 
-    pub fn par_map_calc_field<'py>(
+    pub fn parmap_calc_field<'py>(
         &self,
         py: Python<'py>,
         positions: PyReadonlyArray2<f64>,
     ) -> &'py PyArray2<f64> {
-        calc_arr_internal_field_parallel(&self._field, positions.as_array()).into_pyarray(py)
+        self._field
+            .parmap_calc_field(positions.as_array())
+            .into_pyarray(py)
     }
 }
 
 pub struct InternalField {
-    g: Array2<f64>,
-    h: Array2<f64>,
+    // Note: Using ArcArray to derive Sync
+    g: ArcArray2<f64>,
+    h: ArcArray2<f64>,
     degree: usize,
 }
 
@@ -95,18 +102,31 @@ impl InternalField {
             "Custom" => {
                 let expectmessage = "g and h are expected for Custom field type.";
                 InternalField {
-                    g: g_in.expect(expectmessage),
-                    h: h_in.expect(expectmessage),
+                    g: g_in.expect(expectmessage).to_shared(),
+                    h: h_in.expect(expectmessage).to_shared(),
                     degree: 0,
                 }
-            },
+            }
             _ => panic!("Unknown field_type: Supported (JRM09, JRM33, Custom)"),
         };
 
         if let Some(x) = degree_in {
             if x < field.g.nrows() - 1 {
-                field.g = field.g.slice_move(s![..x + 1, ..x + 1]);
-                field.h = field.h.slice_move(s![..x + 1, ..x + 1]);
+                // Workaround to mutate ArcArray via copy.
+                // We are only initializing when initializing, so this should
+                // not impact performance as much.
+
+                field.g = field
+                    .g
+                    .into_owned()
+                    .slice_move(s![..x + 1, ..x + 1])
+                    .to_shared();
+
+                field.h = field
+                    .h
+                    .into_owned()
+                    .slice_move(s![..x + 1, ..x + 1])
+                    .to_shared();
             }
         }
 
@@ -117,13 +137,19 @@ impl InternalField {
 
     fn normalize_coefficients(mut self) -> Self {
         // Normalize the coefficients here rather than in the calculation
+        // Since g and h are ArcArray, they are immutable by default, hence
+        // the into_owned and to_shared workaround. This is ugly but it is
+        // only done once when the field is initialized.
+
         let s = legendre::schmidt_semi_normalization_constants(&self.degree);
-        self.g *= &s;
-        self.h *= &s;
+        self.g = (self.g.into_owned() * &s).to_shared();
+        self.h = (self.h.into_owned() * &s).to_shared();
         self
     }
+}
 
-    pub fn calc_internal_field(&self, r: f64, theta: f64, phi: f64) -> Array1<f64> {
+impl Field for InternalField {
+    fn calc_field(&self, r: f64, theta: f64, phi: f64) -> Array1<f64> {
         let mut b_r: f64 = 0.;
         let mut b_theta: f64 = 0.;
         let mut b_phi: f64 = 0.;
@@ -181,8 +207,9 @@ impl InternalField {
             }
         }
 
-        if b_phi.is_nan() {
-            b_phi = 0.; // Should set this to zero to not mess up cartesian conversion later.
+        // Should set Bphi to zero if NaN. 
+        if b_phi.is_nan() { 
+            b_phi = 0.; 
         }
 
         // return array of bx, by, bz
@@ -193,12 +220,12 @@ impl InternalField {
 // Separating the JRM09 constants into a separate function
 #[rustfmt::skip]
 fn create_jrm09_field() -> InternalField {
-        
+    
     InternalField {
 
         degree: 10,
 
-        g: Array2::<f64>::from_shape_vec((11, 11), vec![
+        g: ArcArray2::<f64>::from_shape_vec((11, 11), vec![
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
             410244.7, -71498.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
             11670.4, -56835.8, 48689.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -212,7 +239,7 @@ fn create_jrm09_field() -> InternalField {
             -2299.5, 2009.7, 2127.8, 3498.3, 2967.6, 16.3, 1806.5, -46.5, 2897.8, 574.5, 1298.9,
             ]).unwrap(),
 
-        h: Array2::<f64>::from_shape_vec((11, 11), vec![
+        h: ArcArray2::<f64>::from_shape_vec((11, 11), vec![
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
             0.0, 21330.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
             0.0, -42027.3, 19353.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -235,7 +262,7 @@ fn create_jrm33_field() -> InternalField {
 
         degree: 30,
 
-        g: Array2::<f64>::from_shape_vec((31, 31), vec![
+        g: ArcArray2::<f64>::from_shape_vec((31, 31), vec![
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
             410993.4, -71305.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
             11796.7, -56972.4, 48250.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -269,7 +296,7 @@ fn create_jrm33_field() -> InternalField {
             32.2, -0.1, 8.0, -12.8, -0.8, -4.6, -3.2, 0.8, -5.9, 4.4, -14.3, -9.4, 8.0, 16.1, -3.3, 3.6, 3.7, 1.0, -10.9, 4.3, 21.2, -5.4, 0.7, -5.2, -13.0, 5.0, -19.2, -14.3, 32.1, 28.0, 26.9,
             ]).unwrap(),
 
-        h: Array2::<f64>::from_shape_vec((31, 31), vec![
+        h: ArcArray2::<f64>::from_shape_vec((31, 31), vec![
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
             0.0, 20958.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
             0.0, -42549.0, 20221.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -305,47 +332,17 @@ fn create_jrm33_field() -> InternalField {
     }
 }
 
-pub fn calc_arr_internal_field_serial(
-    internal_field: &InternalField,
-    positions: ArrayView2<f64>,
-) -> Array2<f64> {
-    let mut result_arr = Array2::<f64>::zeros((positions.nrows(), 3));
-
-    Zip::from(result_arr.rows_mut())
-        .and(positions.rows())
-        .for_each(|mut x, y| {
-            x.assign(&internal_field.calc_internal_field(y[0], y[1], y[2]));
-        });
-
-    result_arr
-}
-
-pub fn calc_arr_internal_field_parallel(
-    internal_field: &InternalField,
-    positions: ArrayView2<f64>,
-) -> Array2<f64> {
-    let mut result_arr = Array2::<f64>::zeros((positions.nrows(), 3));
-
-    Zip::from(result_arr.rows_mut())
-        .and(positions.rows())
-        .par_for_each(|mut x, y| {
-            x.assign(&internal_field.calc_internal_field(y[0], y[1], y[2]));
-        });
-
-    result_arr
-}
-
 #[cfg(test)]
 mod tests {
     #[test]
-    fn test_calc_internal_field() {
+    fn test_calc_field() {
         use crate::internal;
         use ndarray::Array;
         use std::f64::consts::PI;
 
         let internal_field = internal::InternalField::new("JRM09", None, None, None);
 
-        let val = internal_field.calc_internal_field(10., 0.5 * PI, 0.);
+        let val = internal_field.calc_field(10., 0.5 * PI, 0.);
 
         let val_test = Array::from_vec(vec![
             -131.37542382178387,
