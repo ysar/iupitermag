@@ -4,7 +4,7 @@ use ndarray::{Array1};
 use numpy::{IntoPyArray, PyArray1, PyArray2, PyReadonlyArray2};
 use pyo3::{pyclass, pymethods, Python};
 
-use crate::field::{Field, PyField};
+use crate::field::{Field};
 use crate::convert;
 
 
@@ -21,12 +21,42 @@ impl PyCurrentSheetField {
             _f: CurrentSheetField::new(field_type, params),
         }
     }
+
+    pub fn calc_field<'py>(
+        &self,
+        py: Python<'py>,
+        r: f64,
+        theta: f64,
+        phi: f64,
+    ) -> &'py PyArray1<f64> {
+        let result = self._f.calc_field(r, theta, phi);
+        result.into_pyarray(py)
+    }
+
+    pub fn get_params<'py>(&self, py: Python<'py>) {
+        todo!();
+    }
+
+    pub fn map_calc_field<'py>(
+        &self,
+        py: Python<'py>,
+        positions: PyReadonlyArray2<f64>,
+    ) -> &'py PyArray2<f64> {
+        self._f
+            .map_calc_field(positions.as_array())
+            .into_pyarray(py)
+    }
+
+    pub fn parmap_calc_field<'py>(
+        &self,
+        py: Python<'py>,
+        positions: PyReadonlyArray2<f64>,
+    ) -> &'py PyArray2<f64> {
+        self._f
+            .parmap_calc_field(positions.as_array())
+            .into_pyarray(py)
+    }
 }
-
-impl PyField for PyCurrentSheetField {
-
-}
-
 
 pub struct CurrentSheetField {
     r_0: f64,
