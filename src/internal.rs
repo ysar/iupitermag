@@ -2,12 +2,12 @@ use ndarray::{s, ArcArray2, Array1, Array2};
 use numpy::{IntoPyArray, PyArray1, PyArray2, PyReadonlyArray2};
 use pyo3::{pyclass, pymethods, Python};
 
-use crate::field::Field;
+use crate::field::{Field, PyField};
 use crate::legendre;
 
 #[pyclass]
 pub struct PyInternalField {
-    _field: InternalField,
+    _f: InternalField,
 }
 
 #[pymethods]
@@ -34,53 +34,24 @@ impl PyInternalField {
         }
 
         PyInternalField {
-            _field: InternalField::new(field_type, g, h, degree_in),
+            _f: InternalField::new(field_type, g, h, degree_in),
         }
-    }
-
-    pub fn calc_field<'py>(
-        &self,
-        py: Python<'py>,
-        r: f64,
-        theta: f64,
-        phi: f64,
-    ) -> &'py PyArray1<f64> {
-        let result = self._field.calc_field(r, theta, phi);
-        result.into_pyarray(py)
     }
 
     pub fn get_coefficients<'py>(
         &self,
         py: Python<'py>,
     ) -> (&'py PyArray2<f64>, &'py PyArray2<f64>) {
-        let s = legendre::schmidt_semi_normalization_constants(&self._field.degree);
+        let s = legendre::schmidt_semi_normalization_constants(&self._f.degree);
 
-        let g = self._field.g.to_owned() / &s;
-        let h = self._field.h.to_owned() / &s;
+        let g = self._f.g.to_owned() / &s;
+        let h = self._f.h.to_owned() / &s;
 
         (g.into_pyarray(py), h.into_pyarray(py))
     }
-
-    pub fn map_calc_field<'py>(
-        &self,
-        py: Python<'py>,
-        positions: PyReadonlyArray2<f64>,
-    ) -> &'py PyArray2<f64> {
-        self._field
-            .map_calc_field(positions.as_array())
-            .into_pyarray(py)
-    }
-
-    pub fn parmap_calc_field<'py>(
-        &self,
-        py: Python<'py>,
-        positions: PyReadonlyArray2<f64>,
-    ) -> &'py PyArray2<f64> {
-        self._field
-            .parmap_calc_field(positions.as_array())
-            .into_pyarray(py)
-    }
 }
+
+impl PyField for PyInternalField { }
 
 pub struct InternalField {
     // Note: Using ArcArray to derive Sync
@@ -137,7 +108,7 @@ impl InternalField {
 
     fn normalize_coefficients(mut self) -> Self {
         // Normalize the coefficients here rather than in the calculation
-        // Since g and h are ArcArray, they are immutable by default, hence
+        // Since g and h are ArcArray, they are immutable, hence
         // the into_owned and to_shared workaround. This is ugly but it is
         // only done once when the field is initialized.
 
@@ -207,9 +178,9 @@ impl Field for InternalField {
             }
         }
 
-        // Should set Bphi to zero if NaN. 
-        if b_phi.is_nan() { 
-            b_phi = 0.; 
+        // Should set Bphi to zero if NaN.
+        if b_phi.is_nan() {
+            b_phi = 0.;
         }
 
         // return array of bx, by, bz
@@ -342,7 +313,7 @@ mod tests {
 
         let internal_field = internal::InternalField::new("JRM09", None, None, None);
 
-        let val = internal_field.calc_field(10., 0.5 * PI, 0.);
+        let val = internal_f.calc_field(10., 0.5 * PI, 0.);
 
         let val_test = Array::from_vec(vec![
             -131.37542382178387,
