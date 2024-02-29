@@ -2,6 +2,7 @@ use ndarray::{s, ArcArray2, Array1, Array2};
 use numpy::{IntoPyArray, PyArray1, PyArray2, PyReadonlyArray2};
 use pyo3::{pyclass, pymethods, Python};
 
+use crate::impl_field_methods;
 use crate::field::{Field};
 use crate::legendre;
 
@@ -49,42 +50,9 @@ impl PyInternalField {
 
         (g.into_pyarray(py), h.into_pyarray(py))
     }
-
-    pub fn calc_field<'py>(
-        &self,
-        py: Python<'py>,
-        r: f64,
-        theta: f64,
-        phi: f64,
-    ) -> &'py PyArray1<f64> {
-        let result = self._f.calc_field(r, theta, phi);
-        result.into_pyarray(py)
-    }
-
-    pub fn get_params<'py>(&self, py: Python<'py>) {
-        todo!();
-    }
-
-    pub fn map_calc_field<'py>(
-        &self,
-        py: Python<'py>,
-        positions: PyReadonlyArray2<f64>,
-    ) -> &'py PyArray2<f64> {
-        self._f
-            .map_calc_field(positions.as_array())
-            .into_pyarray(py)
-    }
-
-    pub fn parmap_calc_field<'py>(
-        &self,
-        py: Python<'py>,
-        positions: PyReadonlyArray2<f64>,
-    ) -> &'py PyArray2<f64> {
-        self._f
-            .parmap_calc_field(positions.as_array())
-            .into_pyarray(py)
-    }
 }
+
+impl_field_methods!(PyInternalField);
 
 pub struct InternalField {
     // Note: Using ArcArray to derive Sync
