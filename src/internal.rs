@@ -2,8 +2,8 @@ use ndarray::{s, ArcArray2, Array1, Array2};
 use numpy::{IntoPyArray, PyArray1, PyArray2, PyReadonlyArray2};
 use pyo3::{pyclass, pymethods, Python};
 
+use crate::field::Field;
 use crate::impl_field_methods;
-use crate::field::{Field};
 use crate::legendre;
 
 #[pyclass]

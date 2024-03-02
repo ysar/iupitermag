@@ -6,7 +6,7 @@ iupitermag is a [Python](https://www.python.org/) package written in
 [Rust](https://www.rust-lang.org/)
 to model Jupiter's magnetic field. 
 
-![Jupiter's Surface Field Strength](images/jupiter_surfacefield.png)
+![Jupiter's Surface Field Strength](docs/images/jupiter_surfacefield.png)
 
 *Jupiter's internal magnetic field intensity at the 1-bar "surface".*
 

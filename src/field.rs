@@ -31,12 +31,11 @@ pub trait Field {
     }
 }
 
-
-// The macro below implements pymethods for various pyclasses throughout the 
-// module. This is the only way that I know of to implement shared 
+// The macro below implements pymethods for various pyclasses throughout the
+// module. This is the only way that I know of to implement shared
 // functionality across pyclasses. Each class contains a field of a different
 // type, so it is not possible to subclass from a base class. Likewise, it was
-// not possible to implement a trait since the trait definition 
+// not possible to implement a trait since the trait definition
 // has no knowledge of the struct fields beforehand.
 
 #[macro_export]
@@ -44,7 +43,6 @@ macro_rules! impl_field_methods {
     ($cls:ident) => {
         #[pymethods]
         impl $cls {
-
             // Calculate the field at a point
             pub fn calc_field<'py>(
                 &self,
@@ -56,12 +54,7 @@ macro_rules! impl_field_methods {
                 let result = self._f.calc_field(r, theta, phi);
                 result.into_pyarray(py)
             }
-            
-            // Get parameters for a field model
-            pub fn get_params<'py>(&self, py: Python<'py>) {
-                todo!();
-            }
-            
+
             // Serial iterator into an array of positions to calculate field
             pub fn map_calc_field<'py>(
                 &self,
@@ -72,7 +65,7 @@ macro_rules! impl_field_methods {
                     .map_calc_field(positions.as_array())
                     .into_pyarray(py)
             }
-            
+
             // Rayon iterator into an array of positions to calculate field
             pub fn parmap_calc_field<'py>(
                 &self,
