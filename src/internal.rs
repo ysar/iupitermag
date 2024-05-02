@@ -6,9 +6,10 @@ use crate::field::Field;
 use crate::impl_field_methods;
 use crate::legendre;
 
+#[derive(Clone)]
 #[pyclass]
 pub struct PyInternalField {
-    _f: InternalField,
+    pub _f: InternalField,
 }
 
 #[pymethods]
@@ -54,6 +55,7 @@ impl PyInternalField {
 
 impl_field_methods!(PyInternalField);
 
+#[derive(Clone)]
 pub struct InternalField {
     // Note: Using ArcArray to derive Sync
     g: ArcArray2<f64>,
@@ -85,7 +87,7 @@ impl InternalField {
         if let Some(x) = degree_in {
             if x < field.g.nrows() - 1 {
                 // Workaround to mutate ArcArray via copy.
-                // We are only initializing when initializing, so this should
+                // We are only doing this when initializing, so this should
                 // not impact performance as much.
 
                 field.g = field
@@ -308,13 +310,14 @@ fn create_jrm33_field() -> InternalField {
 mod tests {
     #[test]
     fn test_calc_field() {
+        use crate::field::Field;
         use crate::internal;
         use ndarray::Array;
         use std::f64::consts::PI;
 
         let internal_field = internal::InternalField::new("JRM09", None, None, None);
 
-        let val = internal_f.calc_field(10., 0.5 * PI, 0.);
+        let val = internal_field.calc_field(10., 0.5 * PI, 0.);
 
         let val_test = Array::from_vec(vec![
             -131.37542382178387,
