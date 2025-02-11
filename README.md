@@ -26,17 +26,6 @@ Many **other public codes** do this or something similar,
 > Community.** Space Sci Rev 219, 15 (2023). 
 > [https://doi.org/10.1007/s11214-023-00961-3](https://doi.org/10.1007/s11214-023-00961-3)
 
+# Latest Issues
+The CON2020 current sheet calculation is currently bugged.
 
-
-## Why did I write `iupitermag` if `JupiterMag` already exists?
-I wanted to build a project in Rust to learn the language. I also needed to use
-magnetic field models for my research. So this project is somewhat academic 
-and experimental. I also wanted to have more control over the calculation and 
-implement more targeted features. 
-
-I am very grateful to `JupiterMag` and have actually used it for my research. 
-Not trying to step on any toes here.
-
-## Contributing
-
-If I have written horrible code, please tell me about it via GitHub Issues.
