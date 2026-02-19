@@ -1,6 +1,9 @@
 use ndarray::Array1;
 use numpy::{IntoPyArray, PyArray1, PyArray2, PyReadonlyArray2};
-use pyo3::{pyclass, pymethods, types::PyDict, Py, PyAny, PyResult, Python, ToPyObject};
+use pyo3::{
+    prelude::PyAnyMethods, pyclass, pymethods, types::IntoPyDict, types::PyDict, Bound, PyAny,
+    PyResult, Python,
+};
 use std::collections::HashMap;
 use std::f64::consts::PI;
 
@@ -10,17 +13,17 @@ use crate::impl_field_methods;
 
 #[pyclass]
 pub struct PyCurrentSheetField {
-    _f: CurrentSheetField,
+    field: CurrentSheetField,
 }
 
 #[pymethods]
 impl PyCurrentSheetField {
     #[new]
-    pub fn __init__(field_type: &str, pyparams: &PyDict) -> Self {
-        let params: HashMap<&str, f64> = pyparams.extract().unwrap();
+    pub fn __init__(field_type: String, pyparams: Bound<'_, PyAny>) -> Self {
+        let params: HashMap<String, f64> = pyparams.extract().unwrap();
 
         PyCurrentSheetField {
-            _f: CurrentSheetField::new(field_type, Some(params)),
+            field: CurrentSheetField::new(field_type, Some(params)),
         }
     }
 }
@@ -30,8 +33,8 @@ impl_field_methods!(PyCurrentSheetField);
 #[pymethods]
 impl PyCurrentSheetField {
     // Get parameters for a field model
-    pub fn get_params<'py>(&self, py: Python<'py>) -> Py<PyAny> {
-        self._f.get_params().to_object(py)
+    pub fn get_params<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+        self.field.get_params().into_py_dict(py)
     }
 }
 
@@ -45,8 +48,8 @@ pub struct CurrentSheetField {
 }
 
 impl CurrentSheetField {
-    pub fn new(field_type: &str, params: Option<HashMap<&str, f64>>) -> Self {
-        match field_type {
+    pub fn new(field_type: String, params: Option<HashMap<String, f64>>) -> Self {
+        match field_type.as_str() {
             "CON2020" => CurrentSheetField {
                 r_0: 7.8,
                 r_1: 51.4,
@@ -78,7 +81,6 @@ impl CurrentSheetField {
     }
 
     fn _calc_field(&self, rho: f64, z: f64, a: f64) -> (f64, f64) {
-
         let b_rho: f64;
         let b_z: f64;
 
@@ -96,21 +98,15 @@ impl CurrentSheetField {
             let y_neg = z - self.d;
             let y_pos = z + self.d;
 
-            b_rho = self.mu0_i_2 * (
-                1. / rho * (x_neg - x_pos)
-                + rho * a.powi(2) / 4. * (1. / x_pos.powi(3) - 1. / x_neg.powi(3))
-                + 2. / rho * z_star
-            );
+            b_rho = self.mu0_i_2
+                * (1. / rho * (x_neg - x_pos)
+                    + rho * a.powi(2) / 4. * (1. / x_pos.powi(3) - 1. / x_neg.powi(3))
+                    + 2. / rho * z_star);
 
-            b_z = self.mu0_i_2 * (
-                ((y_pos + x_pos) / (y_neg + x_neg)).ln()
-                + a.powi(2) / 4. * (y_pos / x_pos.powi(3) - y_neg / x_neg.powi(3))
-            );
-
-            
-
+            b_z = self.mu0_i_2
+                * (((y_pos + x_pos) / (y_neg + x_neg)).ln()
+                    + a.powi(2) / 4. * (y_pos / x_pos.powi(3) - y_neg / x_neg.powi(3)));
         } else {
-
             let x_neg = (a.powi(2) + (z - self.d).powi(2)).sqrt();
             let x_pos = (a.powi(2) + (z + self.d).powi(2)).sqrt();
 
@@ -120,15 +116,13 @@ impl CurrentSheetField {
             let y_neg = z - self.d;
             let y_pos = z + self.d;
 
-            b_rho = self.mu0_i_2 * (
-                rho * 0.5 * (1. / x_neg - 1. / x_pos) 
-                + rho.powi(3) / 16. * (x2_neg / x_neg.powi(5) - x2_pos / x_pos.powi(5))
-            );
+            b_rho = self.mu0_i_2
+                * (rho * 0.5 * (1. / x_neg - 1. / x_pos)
+                    + rho.powi(3) / 16. * (x2_neg / x_neg.powi(5) - x2_pos / x_pos.powi(5)));
 
-            b_z = self.mu0_i_2 * (
-                ((y_pos + x_pos) / (y_neg + x_neg)).ln()
-                + rho.powi(2) / 4. * (y_pos / x_pos.powi(3) - y_neg / x_neg.powi(3))
-            );
+            b_z = self.mu0_i_2
+                * (((y_pos + x_pos) / (y_neg + x_neg)).ln()
+                    + rho.powi(2) / 4. * (y_pos / x_pos.powi(3) - y_neg / x_neg.powi(3)));
         }
         (b_rho, b_z)
     }

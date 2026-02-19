@@ -1,3 +1,2 @@
-from .internal import InternalField
 from .currentsheet import CurrentSheetField
-from .trace import FieldTrace
+from .internal import InternalField

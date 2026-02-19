@@ -1,15 +1,15 @@
-use ndarray::{s, ArcArray2, Array1, Array2};
-use numpy::{IntoPyArray, PyArray1, PyArray2, PyReadonlyArray2};
-use pyo3::{pyclass, pymethods, Python};
+use numpy::ndarray::{s, ArcArray2, Array1, Array2};
+use numpy::{IntoPyArray, PyArray1, PyArray2, PyArrayMethods, PyReadonlyArray2};
+use pyo3::{pyclass, pymethods, Bound, Python};
 
 use crate::field::Field;
 use crate::impl_field_methods;
 use crate::legendre;
 
-#[derive(Clone)]
+// #[derive(Clone)]
 #[pyclass]
 pub struct PyInternalField {
-    pub _f: InternalField,
+    pub field: InternalField,
 }
 
 #[pymethods]
@@ -21,33 +21,21 @@ impl PyInternalField {
         h_in: Option<PyReadonlyArray2<f64>>,
         degree_in: Option<usize>,
     ) -> Self {
-        let g: Option<Array2<f64>>;
-        let h: Option<Array2<f64>>;
-
-        if let Some(x) = g_in {
-            g = Some(x.to_owned_array());
-        } else {
-            g = None;
-        }
-        if let Some(x) = h_in {
-            h = Some(x.to_owned_array());
-        } else {
-            h = None;
-        }
+        let g: Option<Array2<f64>> = g_in.map(|x| x.to_owned_array());
+        let h: Option<Array2<f64>> = h_in.map(|x| x.to_owned_array());
 
         PyInternalField {
-            _f: InternalField::new(field_type, g, h, degree_in),
+            field: InternalField::new(field_type, g, h, degree_in),
         }
     }
-
     pub fn get_coefficients<'py>(
         &self,
         py: Python<'py>,
-    ) -> (&'py PyArray2<f64>, &'py PyArray2<f64>) {
-        let s = legendre::schmidt_semi_normalization_constants(&self._f.degree);
+    ) -> (Bound<'py, PyArray2<f64>>, Bound<'py, PyArray2<f64>>) {
+        let s = legendre::schmidt_semi_normalization_constants(&self.field.degree);
 
-        let g = self._f.g.to_owned() / &s;
-        let h = self._f.h.to_owned() / &s;
+        let g = self.field.g.to_owned() / &s;
+        let h = self.field.h.to_owned() / &s;
 
         (g.into_pyarray(py), h.into_pyarray(py))
     }
@@ -194,7 +182,7 @@ impl Field for InternalField {
 // Separating the JRM09 constants into a separate function
 #[rustfmt::skip]
 fn create_jrm09_field() -> InternalField {
-    
+
     InternalField {
 
         degree: 10,
@@ -231,7 +219,7 @@ fn create_jrm09_field() -> InternalField {
 
 #[rustfmt::skip]
 fn create_jrm33_field() -> InternalField {
-        
+
     InternalField {
 
         degree: 30,

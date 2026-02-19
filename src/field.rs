@@ -1,7 +1,17 @@
+use crate::convert;
 use ndarray::{Array1, Array2, ArrayView2, Zip};
 
 pub trait Field {
     fn calc_field(&self, r: f64, theta: f64, phi: f64) -> Array1<f64>;
+
+    /// Return the field calculated at a point (x, y, z) in cartesian coordinates
+    /// (Bx, By, Bz).
+    fn calc_field_xyz(&self, x: f64, y: f64, z: f64) -> Array1<f64> {
+        let pos_xyz = Array1::from(vec![x, y, z]);
+        let pos_rtp = convert::pos_xyz_to_rtp(pos_xyz.view());
+        let b_rtp = self.calc_field(pos_rtp[0], pos_rtp[1], pos_rtp[2]);
+        convert::vec_rtp_to_xyz(b_rtp.view(), &pos_rtp[1], &pos_rtp[2])
+    }
 
     fn map_calc_field(&self, positions: ArrayView2<f64>) -> Array2<f64> {
         let mut result = Array2::<f64>::zeros((positions.nrows(), 3));
@@ -50,9 +60,19 @@ macro_rules! impl_field_methods {
                 r: f64,
                 theta: f64,
                 phi: f64,
-            ) -> &'py PyArray1<f64> {
-                let result = self._f.calc_field(r, theta, phi);
-                result.into_pyarray(py)
+            ) -> Bound<'py, PyArray1<f64>> {
+                self.field.calc_field(r, theta, phi).into_pyarray(py)
+            }
+
+            // Calculate the field at a point in cartesian coordinates.
+            pub fn calc_field_xyz<'py>(
+                &self,
+                py: Python<'py>,
+                x: f64,
+                y: f64,
+                z: f64,
+            ) -> Bound<'py, PyArray1<f64>> {
+                self.field.calc_field_xyz(x, y, z).into_pyarray(py)
             }
 
             // Serial iterator into an array of positions to calculate field
@@ -60,8 +80,8 @@ macro_rules! impl_field_methods {
                 &self,
                 py: Python<'py>,
                 positions: PyReadonlyArray2<f64>,
-            ) -> &'py PyArray2<f64> {
-                self._f
+            ) -> Bound<'py, PyArray2<f64>> {
+                self.field
                     .map_calc_field(positions.as_array())
                     .into_pyarray(py)
             }
@@ -71,8 +91,8 @@ macro_rules! impl_field_methods {
                 &self,
                 py: Python<'py>,
                 positions: PyReadonlyArray2<f64>,
-            ) -> &'py PyArray2<f64> {
-                self._f
+            ) -> Bound<'py, PyArray2<f64>> {
+                self.field
                     .parmap_calc_field(positions.as_array())
                     .into_pyarray(py)
             }

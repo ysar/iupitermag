@@ -10,6 +10,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 lazyivy = "0.3.1"
-ndarray = { version = "0.15.6", features = ["rayon"] }
-numpy = "0.20.0"
-pyo3 = { version = "0.20.2", features = ["extension-module", "multiple-pymethods"] }
+ndarray = { version = "0.17.2", features = ["rayon"] }
+numpy = { version = "0.28.0" }
+pyo3 = { version = "0.28.2", features = ["extension-module", "abi3-py39", "multiple-pymethods"] }
