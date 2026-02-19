@@ -84,45 +84,41 @@ impl CurrentSheetField {
         let b_rho: f64;
         let b_z: f64;
 
+        let m_neg = z - self.d;
+        let m_pos = z + self.d;
+
         if rho > a {
-            let z_star: f64;
-            if z.abs() <= self.d.abs() {
-                z_star = z;
+            let z_star = if z.abs() <= self.d.abs() {
+                z
             } else {
-                z_star = z.signum() * self.d;
-            }
+                z.signum() * self.d
+            };
 
-            let x_neg = (rho.powi(2) + (z - self.d).powi(2)).sqrt();
-            let x_pos = (rho.powi(2) + (z + self.d).powi(2)).sqrt();
-
-            let y_neg = z - self.d;
-            let y_pos = z + self.d;
+            let n_neg = (rho.powi(2) + m_neg.powi(2)).sqrt();
+            let n_pos = (rho.powi(2) + m_pos.powi(2)).sqrt();
 
             b_rho = self.mu0_i_2
-                * (1. / rho * (x_neg - x_pos)
-                    + rho * a.powi(2) / 4. * (1. / x_pos.powi(3) - 1. / x_neg.powi(3))
+                * (1. / rho * (n_neg - n_pos)
+                    + rho * a.powi(2) / 4. * (1. / n_pos.powi(3) - 1. / n_neg.powi(3))
                     + 2. / rho * z_star);
 
             b_z = self.mu0_i_2
-                * (((y_pos + x_pos) / (y_neg + x_neg)).ln()
-                    + a.powi(2) / 4. * (y_pos / x_pos.powi(3) - y_neg / x_neg.powi(3)));
+                * (((m_pos + n_pos) / (m_neg + n_neg)).ln()
+                    + a.powi(2) / 4. * (m_pos / n_pos.powi(3) - m_neg / n_neg.powi(3)));
         } else {
-            let x_neg = (a.powi(2) + (z - self.d).powi(2)).sqrt();
-            let x_pos = (a.powi(2) + (z + self.d).powi(2)).sqrt();
+            let n_neg = (a.powi(2) + m_neg.powi(2)).sqrt();
+            let n_pos = (a.powi(2) + m_pos.powi(2)).sqrt();
 
-            let x2_neg = a.powi(2) - 2. * (z - self.d).powi(2);
-            let x2_pos = a.powi(2) - 2. * (z + self.d).powi(2);
-
-            let y_neg = z - self.d;
-            let y_pos = z + self.d;
+            let p_neg = a.powi(2) - 2. * m_neg.powi(2);
+            let p_pos = a.powi(2) - 2. * m_pos.powi(2);
 
             b_rho = self.mu0_i_2
-                * (rho * 0.5 * (1. / x_neg - 1. / x_pos)
-                    + rho.powi(3) / 16. * (x2_neg / x_neg.powi(5) - x2_pos / x_pos.powi(5)));
+                * (rho * 0.5 * (1. / n_neg - 1. / n_pos)
+                    + rho.powi(3) / 16. * (p_neg / n_neg.powi(5) - p_pos / n_pos.powi(5)));
 
             b_z = self.mu0_i_2
-                * (((y_pos + x_pos) / (y_neg + x_neg)).ln()
-                    + rho.powi(2) / 4. * (y_pos / x_pos.powi(3) - y_neg / x_neg.powi(3)));
+                * (((m_pos + n_pos) / (m_neg + n_neg)).ln()
+                    + rho.powi(2) / 4. * (m_pos / n_pos.powi(3) - m_neg / n_neg.powi(3)));
         }
         (b_rho, b_z)
     }
@@ -141,38 +137,30 @@ impl CurrentSheetField {
 
 impl Field for CurrentSheetField {
     fn calc_field(&self, r: f64, theta: f64, phi: f64) -> Array1<f64> {
-        let cosphi = phi.cos();
-        let sinphi = phi.sin();
-
         // First we need to convert the input coordinates to cartesian
         let pos_in = Array1::from_vec(vec![r, theta, phi]);
         let pos_xyz = convert::pos_rtp_to_xyz(pos_in.view());
 
         // Then we convert the input coordinates from IAU to MAG frame
         let pos_xyz_mag = convert::vec_iau_to_mag(pos_xyz.view(), self.theta_d, self.phi_d);
+        let r_mag = (pos_xyz_mag[0].powi(2) + pos_xyz_mag[1].powi(2)).sqrt();
+        let z_mag = pos_xyz_mag[2];
+        let phi_mag = pos_xyz_mag[1].atan2(pos_xyz_mag[0]);
 
         // Perform calculation in IAU frame and get (Brho, Bz)_MAG
-        let (mut b_mag_rho, mut b_mag_z) = self._calc_field(
-            (pos_xyz_mag[0].powi(2) + pos_xyz_mag[1].powi(2)).sqrt(),
-            pos_xyz_mag[2],
-            self.r_0,
-        );
+        let (mut b_mag_rho, mut b_mag_z) = self._calc_field(r_mag, z_mag, self.r_0);
 
         // Calculate outer field to subtract if self.r_1 is present
         if !self.r_1.is_nan() {
-            let (b_mag_rho_outer, b_mag_z_outer) = self._calc_field(
-                (pos_xyz_mag[0].powi(2) + pos_xyz_mag[1].powi(2)).sqrt(),
-                pos_xyz_mag[2],
-                self.r_1,
-            );
+            let (b_mag_rho_outer, b_mag_z_outer) = self._calc_field(r_mag, z_mag, self.r_1);
 
             b_mag_rho -= b_mag_rho_outer;
             b_mag_z -= b_mag_z_outer;
         }
 
         // Convert (Brho, Bz)_MAG to (Bx, By, Bz)_MAG
-        let b_mag_x = b_mag_rho * cosphi;
-        let b_mag_y = b_mag_rho * sinphi;
+        let b_mag_x = b_mag_rho * phi_mag.cos();
+        let b_mag_y = b_mag_rho * phi_mag.sin();
         let b_mag = Array1::from_vec(vec![b_mag_x, b_mag_y, b_mag_z]);
 
         // Convert (Bx, By, Bz)_MAG to (Bx, By, Bz)_IAU
