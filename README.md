@@ -28,6 +28,19 @@ Many **other public codes** do this or something similar,
 
 ## Installation
 
+### Installing using wheels on PyPI
+
+If you are on Python versions 3.12 or 3.13, you can install directly using the wheels hosted 
+on PyPI.
+
+```
+$ pip install iupitermag
+```
+or
+```
+$ uv add iupitermag
+```
+
 ### Installing from source using `uv`
 
 If you are using `uv` as your Python package manager, you can run the following commands after 
@@ -35,6 +48,12 @@ cloning and changing into this directory.
 
 ```
 $ uv pip install .
+```
+
+### Installing from source using `maturin`
+
+```
+$ maturin develop --release
 ```
 
 ## Usage
