@@ -12,4 +12,4 @@ crate-type = ["cdylib"]
 lazyivy = "0.6.4"
 ndarray = { version = "0.17.2", features = ["rayon"] }
 numpy = { version = "0.28.0" }
-pyo3 = { version = "0.28.2", features = ["extension-module", "abi3-py39", "multiple-pymethods"] }
+pyo3 = { version = "0.28.2", features = ["extension-module", "abi3-py312", "multiple-pymethods"] }
