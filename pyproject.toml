@@ -1,7 +1,7 @@
 [project]
 name = "iupitermag"
 version = "0.1.0"
-description = "Add your description here"
+description = "Python package with Rust bindings to calculate the magnetic field in Jupiter's magnetosphere."
 readme = "README.md"
 authors = [
     { name = "ysar", email = "31999239+ysar@users.noreply.github.com" }

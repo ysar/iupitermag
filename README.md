@@ -26,7 +26,7 @@ Many **other public codes** do this or something similar,
 > Community.** Space Sci Rev 219, 15 (2023). 
 > [https://doi.org/10.1007/s11214-023-00961-3](https://doi.org/10.1007/s11214-023-00961-3)
 
-## Usage
+## Installation
 
 ### Installing from source using `uv`
 
@@ -36,6 +36,8 @@ cloning and changing into this directory.
 ```
 $ uv pip install .
 ```
+
+## Usage
 
 ### Calculating the internal and current sheet fields at a single point.
 
