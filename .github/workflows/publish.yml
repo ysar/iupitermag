@@ -1,0 +1,96 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build sdist + wheels
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Only build wheels for Python >= 3.12
+        python: ["3.12", "3.13"]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        arch: [x86_64]
+        include:
+          - os: ubuntu-latest
+            arch: aarch64
+            python: "3.12"
+          - os: ubuntu-latest
+            arch: aarch64
+            python: "3.13"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          cache: true
+
+      - name: Set up Python
+        run: uv python install ${{ matrix.python }}
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build wheels (maturin)
+        uses: PyO3/maturin-action@v1
+        with:
+          command: build
+          args: --release --out dist -i python${{ matrix.python }}
+          target: ${{ matrix.arch }}
+          manylinux: auto
+
+      - name: Build sdist (once; linux x86_64 only)
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.arch == 'x86_64' }}
+        run: uv run --with maturin maturin sdist --out dist
+
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.os }}-${{ matrix.arch }}-py${{ matrix.python }}
+          path: dist/*
+          if-no-files-found: error
+
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: [build]
+
+    environment:
+      name: pypi
+      url: https://pypi.org/project/iupitermag/
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: dist-*
+          path: dist
+          merge-multiple: true
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          cache: true
+
+      - name: Publish (PyPI Trusted Publishing)
+        run: uv publish --trusted-publishing automatic --check-url https://pypi.org/simple/ dist/*

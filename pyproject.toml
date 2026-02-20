@@ -26,6 +26,8 @@ build-backend = "maturin"
 [dependency-groups]
 dev = [
     "ipykernel>=7.2.0",
-    "jupitermag>=1.4.1",
     "matplotlib>=3.10.8",
+    "pytest>=8.0.0",
+    "ruff>=0.6.0",
+    "pyright>=1.1.380",
 ]
