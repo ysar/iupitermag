@@ -2,12 +2,14 @@ import iupitermag._core as _iu
 
 
 class Field:
+    _field: _iu.PyInternalField | _iu.PyCurrentSheetField
+
     def __init__(self):
         """
         Base class for all field types. Contains generic routines like
         calc_field, map_calc_field, trace_field, etc.
         """
-        self._field = None
+        pass
 
     def calc_field(self, r, theta, phi):
         """
