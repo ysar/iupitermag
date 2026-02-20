@@ -4,5 +4,5 @@ from .field import Field
 
 
 class CurrentSheetField(Field):
-    def __init__(self, typefield, params={}):
-        self._field = _iu.PyCurrentSheetField(typefield, params)
+    def __init__(self, typefield, params={}, integration_type="analytic"):
+        self._field = _iu.PyCurrentSheetField(typefield, params, integration_type)

@@ -8,9 +8,6 @@ class InternalField(Field):
         """
         Class for handling the planet's internal field.
 
-        Use: Initialize using
-            InternalField()
-
         Args:
             typefield (str): Type of planet field. Allowed values are
                 "JRM09", "JRM33", "Custom"
@@ -18,7 +15,7 @@ class InternalField(Field):
             h (np.array): Legendre coefficient array h[n, m]
             degree (int): Degree of field
 
-            g, h, and degree do not need to be specified for non-"Custom" type.
+            g, h, and degree do not need to be specified for named fields.
 
         Returns:
             InternalField class object
@@ -30,6 +27,7 @@ class InternalField(Field):
         Get the coeffiicients of the defined internal field.
 
         Returns:
-            (g, h) (np.array, np.array): Legendre coefficients in units of nT
+            g (np.array): Legendre coefficient (g) in units of nT.
+            h (np.array): Legendre coefficient (h) in units of nT.
         """
         return self._field.get_coefficients()

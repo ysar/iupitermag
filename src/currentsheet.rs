@@ -13,17 +13,23 @@ use crate::impl_field_methods;
 
 #[pyclass]
 pub struct PyCurrentSheetField {
-    field: CurrentSheetField,
+    pub field: CurrentSheetField,
 }
 
 #[pymethods]
 impl PyCurrentSheetField {
     #[new]
-    pub fn __init__(field_type: String, pyparams: Bound<'_, PyAny>) -> Self {
+    pub fn __init__(field_type: String, pyparams: Bound<'_, PyAny>, integration: String) -> Self {
         let params: HashMap<String, f64> = pyparams.extract().unwrap();
 
+        let integration_type = match integration.to_lowercase().as_str() {
+            "analytic" => IntegrationType::Analytic,
+            "integral" => IntegrationType::Integral,
+            _ => panic!("Unrecognized integration type. Allowed - analytic, integral ."),
+        };
+
         PyCurrentSheetField {
-            field: CurrentSheetField::new(field_type, Some(params)),
+            field: CurrentSheetField::new(field_type, Some(params), integration_type),
         }
     }
 }
@@ -38,6 +44,7 @@ impl PyCurrentSheetField {
     }
 }
 
+#[derive(Clone)]
 pub struct CurrentSheetField {
     r_0: f64,
     r_1: f64,
@@ -45,10 +52,15 @@ pub struct CurrentSheetField {
     mu0_i_2: f64,
     theta_d: f64,
     phi_d: f64,
+    integration_type: IntegrationType,
 }
 
 impl CurrentSheetField {
-    pub fn new(field_type: String, params: Option<HashMap<String, f64>>) -> Self {
+    pub fn new(
+        field_type: String,
+        params: Option<HashMap<String, f64>>,
+        integration_type: IntegrationType,
+    ) -> Self {
         match field_type.as_str() {
             "CON2020" => CurrentSheetField {
                 r_0: 7.8,
@@ -57,6 +69,7 @@ impl CurrentSheetField {
                 mu0_i_2: 139.6,
                 theta_d: 9.3 * PI / 180.,
                 phi_d: 204.2 * PI / 180.,
+                integration_type,
             },
             "Custom" => {
                 let _params = params.expect("params required for Custom field type.");
@@ -74,6 +87,7 @@ impl CurrentSheetField {
                     mu0_i_2: _params["mu0_i_2"],
                     theta_d: _params["theta_d"],
                     phi_d: _params["phi_d"],
+                    integration_type,
                 }
             }
             _ => panic!("Unknown field_type: Supported (CON2020, Custom)"),
@@ -81,6 +95,13 @@ impl CurrentSheetField {
     }
 
     fn _calc_field(&self, rho: f64, z: f64, a: f64) -> (f64, f64) {
+        match self.integration_type {
+            IntegrationType::Analytic => self._calc_field_analytic(rho, z, a),
+            IntegrationType::Integral => self._calc_field_integral(rho, z, a),
+        }
+    }
+
+    fn _calc_field_analytic(&self, rho: f64, z: f64, a: f64) -> (f64, f64) {
         let b_rho: f64;
         let b_z: f64;
 
@@ -120,6 +141,16 @@ impl CurrentSheetField {
                 * (((m_pos + n_pos) / (m_neg + n_neg)).ln()
                     + rho.powi(2) / 4. * (m_pos / n_pos.powi(3) - m_neg / n_neg.powi(3)));
         }
+        (b_rho, b_z)
+    }
+
+    fn _calc_field_integral(&self, rho: f64, z: f64, a: f64) -> (f64, f64) {
+        let b_rho: f64;
+        let b_z: f64;
+
+        b_rho = 3.14;
+        b_z = 3.14;
+
         (b_rho, b_z)
     }
 
@@ -169,4 +200,11 @@ impl Field for CurrentSheetField {
         // Convert (Bx, By, Bz)_IAU to (Br, Btheta, Bphi)_IAU and return
         convert::vec_xyz_to_rtp(b_iau.view(), &theta, &phi)
     }
+}
+
+/// How to perform the integration to calculate the magnetic field contribution of the current sheet.
+#[derive(Clone)]
+pub enum IntegrationType {
+    Analytic,
+    Integral,
 }

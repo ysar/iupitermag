@@ -28,6 +28,7 @@ impl PyInternalField {
             field: InternalField::new(field_type, g, h, degree_in),
         }
     }
+
     pub fn get_coefficients<'py>(
         &self,
         py: Python<'py>,

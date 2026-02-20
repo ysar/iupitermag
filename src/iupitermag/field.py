@@ -2,7 +2,7 @@ import iupitermag._core as _iu
 
 
 class Field:
-    def __init__(self, typefield="", g=None, h=None, degree=None):
+    def __init__(self):
         """
         Base class for all field types. Contains generic routines like
         calc_field, map_calc_field, trace_field, etc.
@@ -42,3 +42,9 @@ class Field:
 
     def parmap_calc_field(self, positions):
         return self._field.parmap_calc_field(positions)
+
+    def map_calc_field_xyz(self, positions):
+        return self._field.map_calc_field_xyz(positions)
+
+    def parmap_calc_field_xyz(self, positions):
+        return self._field.parmap_calc_field_xyz(positions)
