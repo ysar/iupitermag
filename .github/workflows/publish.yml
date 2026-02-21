@@ -47,6 +47,9 @@ jobs:
       - name: Install Rust (stable)
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Clean build artifacts
+        run: rm -rf build/ dist/ *.egg-info
+
       - name: Build wheels (maturin)
         uses: PyO3/maturin-action@v1
         with:
