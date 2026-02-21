@@ -11,6 +11,8 @@ use crate::convert;
 use crate::field::Field;
 use crate::impl_field_methods;
 
+const SMOOTHING_DELTA_RHO: f64 = 1.0;
+
 #[pyclass]
 pub struct PyCurrentSheetField {
     pub field: CurrentSheetField,
@@ -105,12 +107,10 @@ impl CurrentSheetField {
     }
 
     fn _calc_field_analytic(&self, rho: f64, z: f64, a: f64) -> Array1<f64> {
-        let b_rho: f64;
-        let b_phi: f64;
-        let b_z: f64;
-
         let m_neg = z - self.d;
         let m_pos = z + self.d;
+
+        let inverse_rho = if rho == 0.0 { 1e-12 } else { 1.0 / rho };
 
         let z_star = if z.abs() <= self.d.abs() {
             z
@@ -118,36 +118,46 @@ impl CurrentSheetField {
             z.signum() * self.d
         };
 
-        if rho > a {
+        let (b_rho_large, b_z_large) = {
             let n_neg = (rho.powi(2) + m_neg.powi(2)).sqrt();
             let n_pos = (rho.powi(2) + m_pos.powi(2)).sqrt();
 
-            b_rho = self.mu0_i_2
-                * (1. / rho * (n_neg - n_pos)
+            let b_rho = self.mu0_i_2
+                * (inverse_rho * (n_neg - n_pos)
                     + rho * a.powi(2) / 4. * (1. / n_pos.powi(3) - 1. / n_neg.powi(3))
-                    + 2. / rho * z_star);
+                    + 2. * inverse_rho * z_star);
 
-            b_z = self.mu0_i_2
+            let b_z = self.mu0_i_2
                 * (((m_pos + n_pos) / (m_neg + n_neg)).ln()
                     + a.powi(2) / 4. * (m_pos / n_pos.powi(3) - m_neg / n_neg.powi(3)));
-        } else {
+            (b_rho, b_z)
+        };
+
+        let (b_rho_small, b_z_small) = {
             let n_neg = (a.powi(2) + m_neg.powi(2)).sqrt();
             let n_pos = (a.powi(2) + m_pos.powi(2)).sqrt();
 
             let p_neg = a.powi(2) - 2. * m_neg.powi(2);
             let p_pos = a.powi(2) - 2. * m_pos.powi(2);
 
-            b_rho = self.mu0_i_2
+            let b_rho = self.mu0_i_2
                 * (rho * 0.5 * (1. / n_neg - 1. / n_pos)
                     + rho.powi(3) / 16. * (p_neg / n_neg.powi(5) - p_pos / n_pos.powi(5)));
 
-            b_z = self.mu0_i_2
+            let b_z = self.mu0_i_2
                 * (((m_pos + n_pos) / (m_neg + n_neg)).ln()
                     + rho.powi(2) / 4. * (m_pos / n_pos.powi(3) - m_neg / n_neg.powi(3)));
-        }
+            (b_rho, b_z)
+        };
+
+        // Apply smoothing.
+        let smoothing = ((rho - a) / SMOOTHING_DELTA_RHO).tanh();
+        let b_rho =
+            b_rho_small * (0.5 * (1.0 - smoothing)) + b_rho_large * (0.5 * (1.0 + smoothing));
+        let b_z = b_z_small * (0.5 * (1.0 - smoothing)) + b_z_large * (0.5 * (1.0 + smoothing));
 
         // Add the phi component.
-        b_phi = if rho == 0.0 {
+        let b_phi = if rho == 0.0 {
             0.0
         } else {
             -2.7975 * self.radial_current / rho * z_star / self.d

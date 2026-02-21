@@ -1,3 +1,5 @@
+use std::f64::consts::PI;
+
 use ndarray::{Array1, Array2, ArrayView1};
 
 /// Converts a vector of cartesian coordinates to spherical coordinates.
@@ -58,10 +60,11 @@ pub fn vec_rpz_to_xyz(arr: ArrayView1<f64>, phi: &f64) -> Array1<f64> {
 /// Converts a cartesian vector in IAU frame to a cartesian vector in MAG frame.
 pub fn vec_iau_to_mag(arr: ArrayView1<f64>, theta_d: f64, phi_d: f64) -> Array1<f64> {
     // To get from IAU to MAG we need to rotate by -Phi_d along z, then
-    // rotate by -Theta_d along Y.
+    // rotate by -Theta_d along Y. The PI subtraction I don't quite understand but it is done by
+    // every current sheet code. Let's just have faith.
 
-    let rot_matrix_1 = rot_matrix_z(-phi_d);
-    let rot_matrix_2 = rot_matrix_y(-theta_d);
+    let rot_matrix_1 = rot_matrix_z(phi_d - PI);
+    let rot_matrix_2 = rot_matrix_y(theta_d);
 
     rot_matrix_2.dot(&rot_matrix_1).dot(&arr)
 }
@@ -71,9 +74,11 @@ pub fn vec_mag_to_iau(arr: ArrayView1<f64>, theta_d: f64, phi_d: f64) -> Array1<
     // To get from IAU to MAG we need to rotate by
     // Theta_d along Y
     // Phi_d along Z
+    // The PI subtraction I don't quite understand but it is done by
+    // every current sheet code. Let's just have faith.
 
-    let rot_matrix_1 = rot_matrix_y(theta_d);
-    let rot_matrix_2 = rot_matrix_z(phi_d);
+    let rot_matrix_1 = rot_matrix_y(-theta_d);
+    let rot_matrix_2 = rot_matrix_z(PI - phi_d);
 
     rot_matrix_2.dot(&rot_matrix_1).dot(&arr)
 }
