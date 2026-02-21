@@ -215,9 +215,3 @@ jobs:
         with:
           packages-dir: dist/
           skip-existing: true
-      - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            dist/*.whl
-          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}
