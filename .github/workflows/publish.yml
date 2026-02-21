@@ -48,7 +48,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Clean build artifacts
-        run: rm -rf build/ dist/ *.egg-info
+        run: python -c "import shutil, glob, os; [shutil.rmtree(p, True) for p in ['build', 'dist']]; [shutil.rmtree(p, True) for p in glob.glob('*.egg-info')]"
 
       - name: Build wheels (maturin)
         uses: PyO3/maturin-action@v1
