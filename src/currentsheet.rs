@@ -52,6 +52,7 @@ pub struct CurrentSheetField {
     mu0_i_2: f64,
     theta_d: f64,
     phi_d: f64,
+    radial_current: f64,
     integration_type: IntegrationType,
 }
 
@@ -69,6 +70,7 @@ impl CurrentSheetField {
                 mu0_i_2: 139.6,
                 theta_d: 9.3 * PI / 180.,
                 phi_d: 204.2 * PI / 180.,
+                radial_current: 16.7,
                 integration_type,
             },
             "Custom" => {
@@ -87,6 +89,7 @@ impl CurrentSheetField {
                     mu0_i_2: _params["mu0_i_2"],
                     theta_d: _params["theta_d"],
                     phi_d: _params["phi_d"],
+                    radial_current: _params["i_rho"],
                     integration_type,
                 }
             }
@@ -94,27 +97,28 @@ impl CurrentSheetField {
         }
     }
 
-    fn _calc_field(&self, rho: f64, z: f64, a: f64) -> (f64, f64) {
+    fn _calc_field(&self, rho: f64, z: f64, a: f64) -> Array1<f64> {
         match self.integration_type {
             IntegrationType::Analytic => self._calc_field_analytic(rho, z, a),
             IntegrationType::Integral => self._calc_field_integral(rho, z, a),
         }
     }
 
-    fn _calc_field_analytic(&self, rho: f64, z: f64, a: f64) -> (f64, f64) {
+    fn _calc_field_analytic(&self, rho: f64, z: f64, a: f64) -> Array1<f64> {
         let b_rho: f64;
+        let b_phi: f64;
         let b_z: f64;
 
         let m_neg = z - self.d;
         let m_pos = z + self.d;
 
-        if rho > a {
-            let z_star = if z.abs() <= self.d.abs() {
-                z
-            } else {
-                z.signum() * self.d
-            };
+        let z_star = if z.abs() <= self.d.abs() {
+            z
+        } else {
+            z.signum() * self.d
+        };
 
+        if rho > a {
             let n_neg = (rho.powi(2) + m_neg.powi(2)).sqrt();
             let n_pos = (rho.powi(2) + m_pos.powi(2)).sqrt();
 
@@ -141,17 +145,28 @@ impl CurrentSheetField {
                 * (((m_pos + n_pos) / (m_neg + n_neg)).ln()
                     + rho.powi(2) / 4. * (m_pos / n_pos.powi(3) - m_neg / n_neg.powi(3)));
         }
-        (b_rho, b_z)
+
+        // Add the phi component.
+        b_phi = if rho == 0.0 {
+            0.0
+        } else {
+            -2.7975 * self.radial_current / rho * z_star / self.d
+        };
+        // println!("{}, {}, {}", b_rho, b_phi, b_z);
+        Array1::from_vec(vec![b_rho, b_phi, b_z])
     }
 
-    fn _calc_field_integral(&self, rho: f64, z: f64, a: f64) -> (f64, f64) {
+    fn _calc_field_integral(&self, rho: f64, z: f64, a: f64) -> Array1<f64> {
+        unimplemented!();
         let b_rho: f64;
+        let b_phi: f64;
         let b_z: f64;
 
-        b_rho = 3.14;
-        b_z = 3.14;
+        b_rho = f64::NAN;
+        b_phi = f64::NAN;
+        b_z = f64::NAN;
 
-        (b_rho, b_z)
+        Array1::from_vec(vec![b_rho, b_phi, b_z])
     }
 
     pub fn get_params(&self) -> HashMap<&str, f64> {
@@ -179,20 +194,17 @@ impl Field for CurrentSheetField {
         let phi_mag = pos_xyz_mag[1].atan2(pos_xyz_mag[0]);
 
         // Perform calculation in IAU frame and get (Brho, Bz)_MAG
-        let (mut b_mag_rho, mut b_mag_z) = self._calc_field(r_mag, z_mag, self.r_0);
+        let mut b_mag_rpz = self._calc_field(r_mag, z_mag, self.r_0);
 
         // Calculate outer field to subtract if self.r_1 is present
         if !self.r_1.is_nan() {
-            let (b_mag_rho_outer, b_mag_z_outer) = self._calc_field(r_mag, z_mag, self.r_1);
-
-            b_mag_rho -= b_mag_rho_outer;
-            b_mag_z -= b_mag_z_outer;
+            let b_mag_rpz_outer = self._calc_field(r_mag, z_mag, self.r_1);
+            // Only subtract the radial and Z components since Brho is the same.
+            b_mag_rpz[0] -= &b_mag_rpz_outer[0];
+            b_mag_rpz[2] -= &b_mag_rpz_outer[2];
         }
 
-        // Convert (Brho, Bz)_MAG to (Bx, By, Bz)_MAG
-        let b_mag_x = b_mag_rho * phi_mag.cos();
-        let b_mag_y = b_mag_rho * phi_mag.sin();
-        let b_mag = Array1::from_vec(vec![b_mag_x, b_mag_y, b_mag_z]);
+        let b_mag = convert::vec_rpz_to_xyz(b_mag_rpz.view(), &phi_mag);
 
         // Convert (Bx, By, Bz)_MAG to (Bx, By, Bz)_IAU
         let b_iau = convert::vec_mag_to_iau(b_mag.view(), self.theta_d, self.phi_d);

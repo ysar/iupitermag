@@ -109,13 +109,15 @@ fn calc_b_unit_vector_inverse(field: &PlanetField, pos: ArrayView1<f64>) -> Arra
     calc_b_unit_vector(field, pos) * (-1.0)
 }
 
-/// Check if point is inside Jupiter's ellipsoid.
+/// Check if point is inside Jupiter's ellipsoid or outside the bounds of tracing.
 fn is_inside_jupiter(pos: ArrayView1<f64>) -> bool {
     let f: f64 = 1.0 / 15.4; // Polar flattening of Jupiter ellipsoid.
     let a: f64 = 1.0;
     let c: f64 = (1.0 - f) * a;
-    let r = pos[0].powi(2) / a.powi(2) + pos[1].powi(2) / a.powi(2) + pos[2].powi(2) / c.powi(2);
-    !(1. ..R_TRACE_MAXIMUM).contains(&r)
+    let r_ellipsoid_norm =
+        pos[0].powi(2) / a.powi(2) + pos[1].powi(2) / a.powi(2) + pos[2].powi(2) / c.powi(2);
+
+    r_ellipsoid_norm < 1. || pos.dot(&pos).sqrt() > R_TRACE_MAXIMUM
 }
 
 struct PlanetField {

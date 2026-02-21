@@ -43,6 +43,18 @@ pub fn vec_rtp_to_xyz(arr: ArrayView1<f64>, theta: &f64, phi: &f64) -> Array1<f6
     ])
 }
 
+/// Converts a vector from cylindrical basis to cartesian basis.
+pub fn vec_rpz_to_xyz(arr: ArrayView1<f64>, phi: &f64) -> Array1<f64> {
+    let sinphi = phi.sin();
+    let cosphi = phi.cos();
+
+    Array1::from_vec(vec![
+        arr[0] * cosphi - arr[1] * sinphi,
+        arr[0] * sinphi + arr[1] * cosphi,
+        arr[2],
+    ])
+}
+
 /// Converts a cartesian vector in IAU frame to a cartesian vector in MAG frame.
 pub fn vec_iau_to_mag(arr: ArrayView1<f64>, theta_d: f64, phi_d: f64) -> Array1<f64> {
     // To get from IAU to MAG we need to rotate by -Phi_d along z, then
