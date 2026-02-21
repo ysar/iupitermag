@@ -96,4 +96,6 @@ jobs:
           cache: true
 
       - name: Publish (PyPI Trusted Publishing)
-        run: uv publish --trusted-publishing automatic --check-url https://pypi.org/simple/ dist/*
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
