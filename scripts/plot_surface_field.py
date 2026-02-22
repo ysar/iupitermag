@@ -7,7 +7,7 @@ plt.style.use("dark_background")
 
 
 def calc_field_iupitermag(pos):
-    internalField = im.InternalField("JRM09")
+    internalField = im.InternalField("JRM33")
     return internalField.map_calc_field(pos)
 
 
