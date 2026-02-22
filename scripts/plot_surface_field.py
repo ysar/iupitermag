@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     cbar = fig.colorbar(mp)
     cbar.set_label("nT")
-    fig.savefig("jupiter_surfacefield.png", facecolor="k", bbox_inches="tight")
+    fig.savefig("images/jupiter_surfacefield.png", facecolor="k", bbox_inches="tight")
 
     plt.show()
     plt.close(fig)

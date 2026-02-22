@@ -40,6 +40,6 @@ if __name__ == "__main__":
     ax.set_xlabel(r"X [R$_J$]")
     ax.set_ylabel(r"Z [R$_J$]")
     ax.set_aspect("equal")
-    fig.savefig("traced_field_lines.png", facecolor="k", bbox_inches="tight")
+    fig.savefig("images/traced_field_lines.png", facecolor="k", bbox_inches="tight")
     plt.show()
     plt.close(fig)

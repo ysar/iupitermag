@@ -1,4 +1,4 @@
-use ndarray::Array1;
+use ndarray::{Array1, ArrayView1};
 use numpy::{IntoPyArray, PyArray1, PyArray2, PyReadonlyArray2};
 use pyo3::{
     prelude::PyAnyMethods, pyclass, pymethods, types::IntoPyDict, types::PyDict, Bound, PyAny,
@@ -193,12 +193,14 @@ impl CurrentSheetField {
 
 impl Field for CurrentSheetField {
     fn calc_field(&self, r: f64, theta: f64, phi: f64) -> Array1<f64> {
-        // First we need to convert the input coordinates to cartesian
-        let pos_in = Array1::from_vec(vec![r, theta, phi]);
-        let pos_xyz = convert::pos_rtp_to_xyz(pos_in.view());
+        let pos_xyz = convert::pos_rtp_to_xyz(&[r, theta, phi]);
+        let b_xyz = self.calc_field_xyz(pos_xyz[0], pos_xyz[1], pos_xyz[2]);
+        convert::vec_xyz_to_rtp(b_xyz.view(), &theta, &phi)
+    }
 
-        // Then we convert the input coordinates from IAU to MAG frame
-        let pos_xyz_mag = convert::vec_iau_to_mag(pos_xyz.view(), self.theta_d, self.phi_d);
+    fn calc_field_xyz(&self, x: f64, y: f64, z: f64) -> Array1<f64> {
+        // Convert the input coordinates from IAU to MAG frame
+        let pos_xyz_mag = convert::vec_iau_to_mag(&[x, y, z], self.theta_d, self.phi_d);
         let r_mag = (pos_xyz_mag[0].powi(2) + pos_xyz_mag[1].powi(2)).sqrt();
         let z_mag = pos_xyz_mag[2];
         let phi_mag = pos_xyz_mag[1].atan2(pos_xyz_mag[0]);
@@ -219,8 +221,7 @@ impl Field for CurrentSheetField {
         // Convert (Bx, By, Bz)_MAG to (Bx, By, Bz)_IAU
         let b_iau = convert::vec_mag_to_iau(b_mag.view(), self.theta_d, self.phi_d);
 
-        // Convert (Bx, By, Bz)_IAU to (Br, Btheta, Bphi)_IAU and return
-        convert::vec_xyz_to_rtp(b_iau.view(), &theta, &phi)
+        b_iau
     }
 }
 

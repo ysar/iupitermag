@@ -8,8 +8,7 @@ pub trait Field {
     /// Return the field calculated at a point (x, y, z) in cartesian coordinates
     /// (Bx, By, Bz).
     fn calc_field_xyz(&self, x: f64, y: f64, z: f64) -> Array1<f64> {
-        let pos_xyz = Array1::from(vec![x, y, z]);
-        let pos_rtp = convert::pos_xyz_to_rtp(pos_xyz.view());
+        let pos_rtp = convert::pos_xyz_to_rtp(&[x, y, z]);
         let b_rtp = self.calc_field(pos_rtp[0], pos_rtp[1], pos_rtp[2]);
         convert::vec_rtp_to_xyz(b_rtp.view(), &pos_rtp[1], &pos_rtp[2])
     }

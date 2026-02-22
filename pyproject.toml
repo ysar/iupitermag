@@ -1,6 +1,6 @@
 [project]
 name = "iupitermag"
-version = "0.1.3"
+version = "0.1.4"
 description = "Python package with Rust bindings to calculate the magnetic field in Jupiter's magnetosphere."
 readme = "README.md"
 authors = [
