@@ -108,16 +108,17 @@ b_int_xyz = internal_field.parmap_calc_field_xyz(points_xyz)
 b_ext_xyz = cs_field.parmap_calc_field_xyz(points_xyz)
 ```
 
-Based on some benchmarks, you should find `parmap_calc_field` nearly an order of magnitude
-faster than `map_calc_field` or a Python loop over all points calling `calc_field`
-repeatedly.  `parmap_*` uses Rayon for parallelizing the calculation.  Here are the results of 
-benchmarking different methods to calculate the JRM33 field for different number of points.
+The below figure shows the results of benchmarking different methods to calculate the JRM09 field 
+for different number of points.  Show are 1) a pure Python implementation of the internal field,
+2) a Python loop that calls `iupitermag`'s `calc_field` repeatedly on a number of points, 3) using
+`map_calc_field` directly on a points collections, and 4) using `parmap_calc_field` on a points 
+collection, which is similar to `map` but uses Rayon for parallelization.
 
 ![Benchmark](images/benchmark.png)
 
-As you can see, `parmap_` is usually the better option if you have more than 20 or so points. Note
-that the Python loop version still calls the Rust code internally to calculate the JRM33 field, so
-even that is faster than a pure-Python implementation (not shown above).
+As you can see, `parmap_` is usually the better option if you have more than 20 or so points, at
+least for this test that uses JRM33.  Compared to the pure-Python implementation, `parmap_` is 
+about three orders of magnitude faster.
 
 ### Tracing magnetic field lines
 
