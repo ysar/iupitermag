@@ -48,9 +48,9 @@ def calc_internal_field(r_a, theta, phi, g, h, N):
     Calculates Psi, Br, Btheta, Bphi based on the spherical harmonics
     representation.
     """
-    Br = 0
-    Btheta = 0
-    Bphi = 0
+    Br = 0.0
+    Btheta = 0.0
+    Bphi = 0.0
 
     a_r = 1.0 / r_a
 
@@ -98,9 +98,7 @@ def calc_internal_field(r_a, theta, phi, g, h, N):
             sinphi_prev = sinmphi
             cosphi_prev = cosmphi
 
-        B = np.array([Br, Btheta, Bphi])
-
-    return B
+    return np.array([Br, Btheta, Bphi])
 
 
 def read_coefficients_file(filename, degree=None, doNormalize=False):
