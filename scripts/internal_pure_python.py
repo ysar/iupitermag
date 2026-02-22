@@ -3,10 +3,7 @@ Methods to calculate field quantities like the JRM magnetic field
 model and the CON2020 current sheet model.
 """
 
-import os
-
 import numpy as np
-import scipy
 
 
 def calc_assoc_legendre_poly(theta, N):
@@ -51,7 +48,6 @@ def calc_internal_field(r_a, theta, phi, g, h, N):
     Calculates Psi, Br, Btheta, Bphi based on the spherical harmonics
     representation.
     """
-    Psi = 0
     Br = 0
     Btheta = 0
     Bphi = 0
@@ -61,7 +57,6 @@ def calc_internal_field(r_a, theta, phi, g, h, N):
     P, diffP = calc_assoc_legendre_poly(theta, N)
 
     sintheta = np.sin(theta)
-    costheta = np.cos(theta)
     sinphi = np.sin(phi)
     cosphi = np.cos(phi)
     inv_sintheta = 0.0
