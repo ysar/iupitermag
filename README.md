@@ -33,12 +33,12 @@ Many **other public codes** do this or something similar,
 If you are on Python versions 3.12 or 3.13, you can install directly using the wheels hosted 
 on PyPI.
 
-```
-$ pip install iupitermag
+```shell
+pip install iupitermag
 ```
 or
-```
-$ uv add iupitermag
+```shell
+uv add iupitermag
 ```
 
 ### Installing from source using `uv`
@@ -46,14 +46,14 @@ $ uv add iupitermag
 If you are using `uv` as your Python package manager, you can run the following commands after 
 cloning and changing into this directory.
 
-```
-$ uv pip install .
+```shell
+uv pip install .
 ```
 
 ### Installing from source using `maturin`
 
-```
-$ maturin develop --release
+```shell
+maturin develop --release
 ```
 
 ## Usage
@@ -66,21 +66,20 @@ All positions should be in the IAU_JUPITER coordinate system.
 import iupitermag as im
 
 internal_field = im.InternalField("JRM33")
-cs_field = im.CurrentSheetField("CON2020")
+currentsheet_field = im.CurrentSheetField("CON2020")
 
 r = 10.
 theta = 0.
 phi = 0.
 b_int_rtp = internal_field.calc_field(r, theta, phi)
-b_ext_rtp = cs_field.calc_field(r, theta, phi)
+b_ext_rtp = currentsheet_field.calc_field(r, theta, phi)
 
 # Or, you can the cartesian form.  This calls the spherical version internally.
 x = 10.
 y = 5.
 z = 1.
 b_int_xyz = internal_field.calc_field_xyz(x, y, z)
-b_ext_xyz = cs_field.calc_field_xyz(x, y, z)
-
+b_ext_xyz = currentsheet_field.calc_field_xyz(x, y, z)
 ```
 
 ### Calculating the internal and current sheet fields for a collection of points.
@@ -90,22 +89,24 @@ you can use `map_calc_field` or `parmap_calc_field` (or their corresponding
 cartesian versions `map_calc_field_xyz` and `parmap_calc_field_xyz`).
 
 ```python
+# By default, iupitermag uses spherical coordinates (r, theta, phi)
 points = np.zeros((10000, 3))
 points[:, 0] = np.random.random_sample((10000,)) * 10 + 5
 
 b_int = internal_field.map_calc_field(points)
-b_ext = cs_field.map_calc_field(points)
+b_ext = currentsheet_field.map_calc_field(points)
 
 b_int = internal_field.parmap_calc_field(points)
-b_ext = cs_field.parmap_calc_field(points)
+b_ext = currentsheet_field.parmap_calc_field(points)
 
+# Assume some cartesian coordinates in shape (N, 3)
 points_xyz = points * 1.
 
 b_int_xyz = internal_field.map_calc_field_xyz(points_xyz)
-b_ext_xyz = cs_field.map_calc_field_xyz(point_xyz)
+b_ext_xyz = currentsheet_field.map_calc_field_xyz(point_xyz)
 
 b_int_xyz = internal_field.parmap_calc_field_xyz(points_xyz)
-b_ext_xyz = cs_field.parmap_calc_field_xyz(points_xyz)
+b_ext_xyz = currentsheet_field.parmap_calc_field_xyz(points_xyz)
 ```
 
 The below figure shows the results of benchmarking different methods to calculate the JRM09 field 
@@ -127,8 +128,10 @@ as input a collection of starting points (which each result in a separate trace)
 for these starting points should be cartesian.
 
 ```python
+import iupitermag as im
+
 internal_field = im.InternalField("JRM33")
-cs_field = im.CurrentSheetField("CON2020")
+currentsheet_field = im.CurrentSheetField("CON2020")
 
 starting_positions_xyz = np.array([
     [-10., 0., 0.],
@@ -141,7 +144,7 @@ starting_positions_xyz = np.array([
     [25., 0., 0.],
 ])
 
-trace = im.trace_field_to_planet(starting_positions_xyz, internal_field, cs_field)
+trace = im.trace_field_to_planet(starting_positions_xyz, internal_field, currentsheet_field)
 ```
 
 ![Traced field lines](images/traced_field_lines.png)
