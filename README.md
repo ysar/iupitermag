@@ -2,15 +2,16 @@
 
 ## Introduction 
 
-iupitermag is a [Python](https://www.python.org/) package written in
-[Rust](https://www.rust-lang.org/)
-to model Jupiter's magnetic field. 
+iupitermag is a Python package with Rust bindings to model Jupiter's magnetic field.  This includes 
+the internal field represented by spherical harmonics and the current sheet field like CON2020. In 
+addition to using named field models like JRM33, JRM09, CON2020, you may also use your own model 
+parameters to define a custom field model.
 
 ![Jupiter's Surface Field Strength](images/jupiter_surfacefield.png)
 
-*Jupiter's internal magnetic field intensity at the 1-bar "surface".*
+*Jupiter's internal magnetic field intensity at the 1-bar "surface" using the JRM33 model.*
 
-Many **other public codes** do this or something similar,
+Many other public codes do this or something similar,
 
 * [`JupiterMag`](https://github.com/mattkjames7/JupiterMag) - 
   A Python package that uses the 
@@ -31,25 +32,32 @@ Many **other public codes** do this or something similar,
 ### Installing using wheels on PyPI
 
 If you are on Python versions 3.12 or 3.13, you can install directly using the wheels hosted 
-on PyPI.
+on PyPI. This does not require you to install the Rust toolchain.
 
 ```shell
 pip install iupitermag
 ```
-or
+
+If you are using a package manager like `uv`, you can also use the following commands. These will 
+use the wheels uploaded on PyPI unless you are on a Python version or platform for which the wheels
+are unavailable.
+
+```shell
+uv pip install iupitermag
+```
+To add to `uv.lock` and `pyproject.toml` in your projects, use -
+
 ```shell
 uv add iupitermag
 ```
 
 ### Installing from source using `uv`
 
-If you are using `uv` as your Python package manager, you can run the following commands after 
-cloning and changing into this directory.
-
 ```shell
+git clone https://github.com/ysar/iupitermag.git --depth=1
+cd iupitermag
 uv pip install .
 ```
-
 ### Installing from source using `maturin`
 
 ```shell

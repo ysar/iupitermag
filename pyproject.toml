@@ -4,12 +4,15 @@ version = "0.1.5"
 description = "Python package with Rust bindings to calculate the magnetic field in Jupiter's magnetosphere."
 readme = "README.md"
 authors = [
-    { name = "ysar", email = "31999239+ysar@users.noreply.github.com" }
+    { name = "Yash Sarkango" }
 ]
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=2.4.2",
 ]
+
+[project.urls]
+Repository = "https://github.com/ysar/iupitermag.git"
 
 [tool.maturin]
 module-name = "iupitermag._core"

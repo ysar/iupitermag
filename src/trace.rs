@@ -49,7 +49,7 @@ fn _trace_field_to_planet(
     let absolute_tol = Array1::from_vec(vec![1.0e-4, 1.0e-4, 1.0e-4]);
     let relative_tol = Array1::from_vec(vec![1.0e-4, 1.0e-4, 1.0e-4]);
 
-    let integrator = RungeKutta::builder(
+    let integrator_pos = RungeKutta::builder(
         |_, p, mut val| val.assign(&(calc_b_unit_vector(&planet_field, p))),
         |_, p| is_inside_jupiter(p),
     )
@@ -61,7 +61,7 @@ fn _trace_field_to_planet(
     .build()
     .unwrap();
 
-    let integrator_inverse = RungeKutta::builder(
+    let integrator_neg = RungeKutta::builder(
         |_, p, mut val| val.assign(&(calc_b_unit_vector_inverse(&planet_field, p))),
         |_, p| is_inside_jupiter(p),
     )
@@ -73,10 +73,8 @@ fn _trace_field_to_planet(
     .build()
     .unwrap();
 
-    let trace_pos = integrator.map(|(_, p)| p).collect::<Vec<Array1<f64>>>();
-    let trace_neg = integrator_inverse
-        .map(|(_, p)| p)
-        .collect::<Vec<Array1<f64>>>();
+    let trace_pos = integrator_pos.map(|(_, p)| p).collect::<Vec<Array1<f64>>>();
+    let trace_neg = integrator_neg.map(|(_, p)| p).collect::<Vec<Array1<f64>>>();
 
     let num_points_pos = trace_pos.len();
     let num_points_neg = trace_neg.len();
