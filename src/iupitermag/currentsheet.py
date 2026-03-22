@@ -14,6 +14,14 @@ class CurrentSheetField(Field):
                 does not need to be used.
 
             params (dict): The parameters of the current sheet. Only necessary for 'Custom' field.
+                The following parameters are required -
+                    'r_0' (inner radius),
+                    'r_1' (outer radius),
+                    'd' (scale height),
+                    'mu0_i_2' (current),
+                    'theta_d' (current sheet inclination with respect to spin axis),
+                    'phi_d' (direction of tilt of the current sheet plane) and,
+                    'i_rho' (radial current)
 
             integration_type (str): Type of integration used. Options are 'analytic' (default) or
                 'integral' (not currently implemented).

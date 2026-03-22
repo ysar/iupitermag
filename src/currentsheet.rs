@@ -54,7 +54,7 @@ pub struct CurrentSheetField {
     mu0_i_2: f64,
     theta_d: f64,
     phi_d: f64,
-    radial_current: f64,
+    i_rho: f64,
     integration_type: IntegrationType,
 }
 
@@ -72,13 +72,13 @@ impl CurrentSheetField {
                 mu0_i_2: 139.6,
                 theta_d: 9.3 * PI / 180.,
                 phi_d: 204.2 * PI / 180.,
-                radial_current: 16.7,
+                i_rho: 16.7,
                 integration_type,
             },
             "Custom" => {
                 let _params = params.expect("params required for Custom field type.");
 
-                let param_names = ["r_0", "r_1", "d", "mu0_i_2", "theta_d", "phi_d"];
+                let param_names = ["r_0", "r_1", "d", "mu0_i_2", "theta_d", "phi_d", "i_rho"];
 
                 for key in param_names {
                     assert!(_params.contains_key(key), "Missing param - {:}", key);
@@ -91,7 +91,7 @@ impl CurrentSheetField {
                     mu0_i_2: _params["mu0_i_2"],
                     theta_d: _params["theta_d"],
                     phi_d: _params["phi_d"],
-                    radial_current: _params["i_rho"],
+                    i_rho: _params["i_rho"],
                     integration_type,
                 }
             }
@@ -160,7 +160,7 @@ impl CurrentSheetField {
         let b_phi = if rho == 0.0 {
             0.0
         } else {
-            -2.7975 * self.radial_current / rho * z_star / self.d
+            -2.7975 * self.i_rho / rho * z_star / self.d
         };
         // println!("{}, {}, {}", b_rho, b_phi, b_z);
         Array1::from_vec(vec![b_rho, b_phi, b_z])
@@ -187,6 +187,7 @@ impl CurrentSheetField {
             ("mu0_i_2", self.mu0_i_2),
             ("theta_d", self.theta_d),
             ("phi_d", self.phi_d),
+            ("i_rho", self.i_rho),
         ])
     }
 }

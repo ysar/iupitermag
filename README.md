@@ -71,6 +71,7 @@ maturin develop --release
 All positions should be in the IAU_JUPITER coordinate system.
 
 ```python
+import numpy as np
 import iupitermag as im
 
 internal_field = im.InternalField("JRM33")
@@ -136,6 +137,7 @@ as input a collection of starting points (which each result in a separate trace)
 for these starting points should be cartesian.
 
 ```python
+import numpy as np
 import iupitermag as im
 
 internal_field = im.InternalField("JRM33")
@@ -156,3 +158,52 @@ trace = im.trace_field_to_planet(starting_positions_xyz, internal_field, current
 ```
 
 ![Traced field lines](images/traced_field_lines.png)
+
+### Using a custom internal and current sheet field
+
+To use your own internal field or current sheet model, use the "Custom" argument when instantiating 
+a field object. The following example describes how to create an internal field for an 
+axially-aligned dipole and defining new current sheet model that is similar to CON2020 but ignores 
+the current sheet tilt.
+
+```python
+import numpy as np
+import iupitermag as im
+
+# Create a new axially aligned dipole field using Schmidt coefficients. 
+# That is, only g[1, 0] is non-zero.
+internal_field = im.InternalField(
+    "Custom",
+    g=np.array([[0.0, 0.0], [410993.4, 0.0]]),
+    h=np.array([[0.0, 0.0], [0.0, 0.0]]),
+)
+
+# Get parameters for CON2020
+con2020_field = im.CurrentSheetField("CON2020")
+params = con2020_field.get_params()
+
+# Change current sheet tilt to 0.0
+params["theta_d"] = 0.0
+
+# Define a modified current sheet field based on CON2020 parameters.
+currentsheet_field = im.CurrentSheetField("Custom", params=params)
+
+starting_positions = np.array(
+    [
+        [-10.0, 0.0, 0.0],
+        [-15.0, 0.0, 0.0],
+        [-20.0, 0.0, 0.0],
+        [-25.0, 0.0, 0.0],
+        [10.0, 0.0, 0.0],
+        [15.0, 0.0, 0.0],
+        [20.0, 0.0, 0.0],
+        [25.0, 0.0, 0.0],
+    ]
+)
+
+trace = im.trace_field_to_planet(
+    starting_positions, internal_field, currentsheet_field
+)
+```
+
+![Traced field lines (Custom field)](images/traced_field_lines_custom.png)
