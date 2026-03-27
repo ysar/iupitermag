@@ -21,7 +21,7 @@ class CurrentSheetField(Field):
                     'mu0_i_2' (current),
                     'theta_d' (current sheet inclination with respect to spin axis),
                     'phi_d' (direction of tilt of the current sheet plane) and,
-                    'i_rho' (radial current)
+                    'i_rho' (radial current).
 
             integration_type (str): Type of integration used. Options are 'analytic' (default) or
                 'integral' (not currently implemented).

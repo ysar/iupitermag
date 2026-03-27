@@ -31,7 +31,7 @@ Many other public codes do this or something similar,
 
 ### Installing using wheels on PyPI
 
-If you are on Python versions 3.12 or 3.13, you can install directly using the wheels hosted 
+If you are on Python versions 3.12, 3.13 or 3.14, you can install directly using the wheels hosted 
 on PyPI. This does not require you to install the Rust toolchain.
 
 ```shell
@@ -118,7 +118,7 @@ b_int_xyz = internal_field.parmap_calc_field_xyz(points_xyz)
 b_ext_xyz = currentsheet_field.parmap_calc_field_xyz(points_xyz)
 ```
 
-The below figure shows the results of benchmarking different methods to calculate the JRM09 field 
+The below figure shows the results of benchmarking different methods to calculate the JRM33 field 
 for different number of points.  Show are 1) a pure Python implementation of the internal field,
 2) a Python loop that calls `iupitermag`'s `calc_field` repeatedly on a number of points, 3) using
 `map_calc_field` directly on a points collections, and 4) using `parmap_calc_field` on a points 
