@@ -2,10 +2,10 @@
 
 ## Introduction 
 
-iupitermag is a Python package with Rust bindings to model Jupiter's magnetic field.  This includes 
+iupitermag is a Python package to model Jupiter's magnetic field.  This includes 
 the internal field represented by spherical harmonics and the current sheet field like CON2020. In 
 addition to using named field models like JRM33, JRM09, CON2020, you may also use your own model 
-parameters to define a custom field model.
+parameters to define a custom field model. It is very fast because it uses Rust internally.
 
 ![Jupiter's Surface Field Strength](https://raw.githubusercontent.com/ysar/iupitermag/refs/heads/main/images/jupiter_surfacefield.png)
 
