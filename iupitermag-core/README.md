@@ -15,7 +15,7 @@ is also documented to some extent on `docs.rs`.
 
 ## Installation
 To add this core library in your Rust projects, use
-```
+```shell
 cargo add iupitermag
 ```
 Or add it to the `Cargo.toml` file.
@@ -36,8 +36,8 @@ use iupitermag::currentsheet::{CurrentSheetField, IntegrationType};
 use iupitermag::field::Field; // This is the Field trait, necessary for calc_field
 
 // Instantiate the JRM33 and CON2020 fields.
-let internal_field = iupitermag::internal::InternalField("JRM33", None, None, None);
-let currentsheet_field = iupitermag::currentsheet::CurrentSheetField(
+let internal_field = InternalField::new("JRM33", None, None, None);
+let currentsheet_field = CurrentSheetField::new(
     "CON2020".to_string(), None, IntegrationType::Analytic
 );
 
@@ -68,9 +68,9 @@ as input a collection of starting points (which each result in a separate trace)
 for these starting points should be cartesian.
 
 ```rust
-use crate::currentsheet::{CurrentSheetField, IntegrationType};
-use crate::internal::InternalField;
-use crate::trace::trace_field_to_planet;
+use iupitermag::currentsheet::{CurrentSheetField, IntegrationType};
+use iupitermag::internal::InternalField;
+use iupitermag::trace::trace_field_to_planet;
 use ndarray::Array;
 
 let internal_field = InternalField::new("JRM33", None, None, Some(10));
