@@ -34,15 +34,13 @@ jobs:
           cache: true
 
       - name: Set up Python
-        run: uv python install ${{ matrix.python-version }}
+        run: cd iupitermag-py && uv python install ${{ matrix.python-version }}
 
       - name: Install maturin
-        run: uv pip install maturin
+        run: cd iupitermag-py && uv pip install maturin
 
       - name: Build and install Python extension
-        run: |
-          cd iupitermag-py
-          maturin develop
+        run: cd iupitermag-py && maturin develop
 
       - name: Sync dependencies (incl. dev)
         run: cd iupitermag-py && uv sync --dev

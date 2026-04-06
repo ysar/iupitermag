@@ -7,7 +7,7 @@ the internal field represented by spherical harmonics and the current sheet fiel
 addition to using named field models like JRM33, JRM09, CON2020, you may also use your own model 
 parameters to define a custom field model.
 
-![Jupiter's Surface Field Strength](images/jupiter_surfacefield.png)
+![Jupiter's Surface Field Strength](https://raw.githubusercontent.com/ysar/iupitermag/refs/heads/main/images/jupiter_surfacefield.png)
 
 *Jupiter's internal magnetic field intensity at the 1-bar "surface" using the JRM33 model.*
 
@@ -124,7 +124,7 @@ for different number of points.  Show are 1) a pure Python implementation of the
 `map_calc_field` directly on a points collections, and 4) using `parmap_calc_field` on a points 
 collection, which is similar to `map` but uses Rayon for parallelization.
 
-![Benchmark](images/benchmark.png)
+![Benchmark](https://raw.githubusercontent.com/ysar/iupitermag/refs/heads/main/images/benchmark.png)
 
 As you can see, `parmap_` is usually the better option if you have more than 20 or so points, at
 least for this test that uses JRM33.  Compared to the pure-Python implementation, `parmap_` is 
@@ -157,7 +157,7 @@ starting_positions_xyz = np.array([
 trace = im.trace_field_to_planet(starting_positions_xyz, internal_field, currentsheet_field)
 ```
 
-![Traced field lines](images/traced_field_lines.png)
+![Traced field lines](https://raw.githubusercontent.com/ysar/iupitermag/refs/heads/main/images/traced_field_lines.png)
 
 ### Using a custom internal and current sheet field
 
@@ -206,4 +206,4 @@ trace = im.trace_field_to_planet(
 )
 ```
 
-![Traced field lines (Custom field)](images/traced_field_lines_custom.png)
+![Traced field lines (Custom field)](https://raw.githubusercontent.com/ysar/iupitermag/refs/heads/main/images/traced_field_lines_custom.png)
