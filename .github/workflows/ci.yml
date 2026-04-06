@@ -36,6 +36,9 @@ jobs:
       - name: Set up Python
         run: cd iupitermag-py && uv python install ${{ matrix.python-version }}
 
+      - name: Create a virtual environment
+        run: cd iupitermag-py && uv venv
+
       - name: Install maturin
         run: cd iupitermag-py && uv pip install maturin
 
