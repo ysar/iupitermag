@@ -61,4 +61,4 @@ jobs:
         run: cd iupitermag-py && uv run pytest -q
 
       - name: Run Rust core tests
-        run: cargo test -p iupitermag-core
+        run: cargo test -p iupitermag
