@@ -1,5 +1,9 @@
 # iupitermag
 
+[![Crate](https://img.shields.io/crates/v/iupitermag)](https://crates.io/crates/iupitermag)
+[![Build](https://github.com/ysar/iupitermag/actions/workflows/ci.yml/badge.svg)](https://github.com/ysar/iupitermag/actions/workflows/ci.yml)
+[![PyPI - Version](https://img.shields.io/pypi/v/iupitermag)](https://pypi.org/project/iupitermag)
+
 ## Introduction 
 
 iupitermag is a Python package to model Jupiter's magnetic field.  This includes 
