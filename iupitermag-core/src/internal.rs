@@ -1,49 +1,8 @@
-use numpy::ndarray::{s, ArcArray2, Array1, Array2};
-use numpy::{IntoPyArray, PyArray1, PyArray2, PyArrayMethods, PyReadonlyArray2};
-use pyo3::{pyclass, pymethods, Bound, Python};
-
 use crate::field::Field;
-use crate::impl_field_methods;
 use crate::legendre;
+use ndarray::{ArcArray2, Array1, Array2, s};
 
-// #[derive(Clone)]
-#[pyclass]
-pub struct PyInternalField {
-    pub field: InternalField,
-}
-
-#[pymethods]
-impl PyInternalField {
-    #[new]
-    pub fn __init__(
-        field_type: &str,
-        g_in: Option<PyReadonlyArray2<f64>>,
-        h_in: Option<PyReadonlyArray2<f64>>,
-        degree_in: Option<usize>,
-    ) -> Self {
-        let g: Option<Array2<f64>> = g_in.map(|x| x.to_owned_array());
-        let h: Option<Array2<f64>> = h_in.map(|x| x.to_owned_array());
-
-        PyInternalField {
-            field: InternalField::new(field_type, g, h, degree_in),
-        }
-    }
-
-    pub fn get_coefficients<'py>(
-        &self,
-        py: Python<'py>,
-    ) -> (Bound<'py, PyArray2<f64>>, Bound<'py, PyArray2<f64>>) {
-        let s = legendre::schmidt_semi_normalization_constants(&self.field.degree);
-
-        let g = self.field.g.to_owned() / &s;
-        let h = self.field.h.to_owned() / &s;
-
-        (g.into_pyarray(py), h.into_pyarray(py))
-    }
-}
-
-impl_field_methods!(PyInternalField);
-
+/// Struct to characterize an internal field model using Schmidt coefficients.
 #[derive(Clone)]
 pub struct InternalField {
     // Note: Using ArcArray to derive Sync
@@ -53,6 +12,7 @@ pub struct InternalField {
 }
 
 impl InternalField {
+    /// Instantiate a new `InternalField` struct.
     pub fn new(
         field_type: &str,
         g_in: Option<Array2<f64>>,
@@ -73,24 +33,24 @@ impl InternalField {
             _ => panic!("Unknown field_type: Supported (JRM09, JRM33, Custom)"),
         };
 
-        if let Some(x) = degree_in {
-            if x < field.g.nrows() - 1 {
-                // Workaround to mutate ArcArray via copy.
-                // We are only doing this when initializing, so this should
-                // not impact performance as much.
+        if let Some(x) = degree_in
+            && x < field.g.nrows()
+        {
+            // Workaround to mutate ArcArray via copy.
+            // We are only doing this when initializing, so this should
+            // not impact performance as much.
 
-                field.g = field
-                    .g
-                    .into_owned()
-                    .slice_move(s![..x + 1, ..x + 1])
-                    .to_shared();
+            field.g = field
+                .g
+                .into_owned()
+                .slice_move(s![..x + 1, ..x + 1])
+                .to_shared();
 
-                field.h = field
-                    .h
-                    .into_owned()
-                    .slice_move(s![..x + 1, ..x + 1])
-                    .to_shared();
-            }
+            field.h = field
+                .h
+                .into_owned()
+                .slice_move(s![..x + 1, ..x + 1])
+                .to_shared();
         }
 
         field.degree = field.g.nrows() - 1;
@@ -108,6 +68,12 @@ impl InternalField {
         self.g = (self.g.into_owned() * &s).to_shared();
         self.h = (self.h.into_owned() * &s).to_shared();
         self
+    }
+
+    /// Get the Schimdt coefficients for this internal field model.
+    pub fn get_coefficients(&self) -> (Array2<f64>, Array2<f64>) {
+        let s = legendre::schmidt_semi_normalization_constants(&self.degree);
+        (self.g.to_owned() / &s, self.h.to_owned() / &s)
     }
 }
 
@@ -298,7 +264,7 @@ fn create_jrm33_field() -> InternalField {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn test_calc_field() {
+    fn test_calc_internal_field() {
         use crate::field::Field;
         use crate::internal;
         use ndarray::Array;

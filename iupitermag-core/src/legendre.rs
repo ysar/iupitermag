@@ -1,9 +1,9 @@
 use ndarray::Array2;
 
-// Calculate the Gauss-normalized Legendre polynomials.
-// Returns two numpy::ndarrays of size (degree + 1, degree + 1) containing the
-// coefficient of the polynomial and its derivative (P(n, m) and dP(n, m))
-// at order n and degree m.
+/// Calculate the Gauss-normalized Legendre polynomials.
+/// Returns two numpy::ndarrays of size (degree + 1, degree + 1) containing the
+/// coefficient of the polynomial and its derivative (P(n, m) and dP(n, m))
+/// at order n and degree m.
 pub fn assoc_legendre_poly(theta: &f64, degree: &usize) -> (Array2<f64>, Array2<f64>) {
     let size = degree + 1;
 
@@ -41,6 +41,7 @@ pub fn assoc_legendre_poly(theta: &f64, degree: &usize) -> (Array2<f64>, Array2<
     (p, dp)
 }
 
+/// Calculates the `s` Schmidt normalization constant.
 pub fn schmidt_semi_normalization_constants(degree: &usize) -> Array2<f64> {
     let mut s = Array2::<f64>::from_elem((degree + 1, degree + 1), 1.);
 
@@ -62,7 +63,7 @@ mod tests {
         use crate::legendre;
         use ndarray::Array2;
 
-        let xarr = vec![0., 0.2, 0.4, 0.6, 0.8, 1.0];
+        let xarr: [f64; 6] = [0., 0.2, 0.4, 0.6, 0.8, 1.0];
         let val_check = Array2::from_shape_vec(
             (6, 2),
             vec![0., 1., 0.2, 0.9798, 0.4, 0.9165, 0.6, 0.8, 0.8, 0.6, 1., 0.],
@@ -73,7 +74,7 @@ mod tests {
         for iarr in 0..6 {
             println!("x = {:}", xarr[iarr]);
             println!("val = {:?}", val_check[[iarr, 1]]);
-            let (p, _dp) = legendre::assoc_legendre_poly(&((xarr[iarr] as f64).acos()), &n);
+            let (p, _dp) = legendre::assoc_legendre_poly(&((xarr[iarr]).acos()), &n);
             let s = legendre::schmidt_semi_normalization_constants(&n);
 
             for j in 0..2 {

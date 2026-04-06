@@ -1,15 +1,6 @@
-[package]
-name = "iupitermag"
-version = "0.1.6"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[lib]
-name = "iupitermag"
-crate-type = ["cdylib"]
-
-[dependencies]
-lazyivy = "0.6.4"
-ndarray = { version = "0.17.2", features = ["rayon"] }
-numpy = { version = "0.28.0" }
-pyo3 = { version = "0.28.2", features = ["extension-module", "abi3-py312", "multiple-pymethods"] }
+[workspace]
+members = [
+    "iupitermag-core",
+    "iupitermag-py",
+]
+resolver = "2"

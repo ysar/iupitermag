@@ -1,8 +1,6 @@
-pub mod convert;
 pub mod currentsheet;
 pub mod field;
 pub mod internal;
-pub mod legendre;
 pub mod trace;
 
 use pyo3::pymodule;

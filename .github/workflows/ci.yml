@@ -36,17 +36,28 @@ jobs:
       - name: Set up Python
         run: uv python install ${{ matrix.python-version }}
 
+      - name: Install maturin
+        run: uv pip install maturin
+
+      - name: Build and install Python extension
+        run: |
+          cd iupitermag-py
+          maturin develop
+
       - name: Sync dependencies (incl. dev)
-        run: uv sync --dev
+        run: cd iupitermag-py && uv sync --dev
 
       - name: Lint (ruff)
-        run: uv run ruff check .
+        run: cd iupitermag-py && uv run ruff check .
 
       - name: Format check (ruff)
-        run: uv run ruff format --check .
+        run: cd iupitermag-py && uv run ruff format --check .
 
       - name: Type check (pyright)
-        run: uv run pyright
+        run: cd iupitermag-py && uv run pyright
 
       - name: Run tests (pytest)
-        run: uv run pytest -q
+        run: cd iupitermag-py && uv run pytest -q
+
+      - name: Run Rust core tests
+        run: cargo test -p iupitermag-core

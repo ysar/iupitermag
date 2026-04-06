@@ -101,6 +101,6 @@ if __name__ == "__main__":
     ax.set_xlabel("num points")
     ax.set_ylabel("time [s]")
     plt.show()
-    fig.savefig("images/benchmark.png", facecolor="k", bbox_inches="tight")
+    fig.savefig("../images/benchmark.png", facecolor="k", bbox_inches="tight")
     plt.show()
     plt.close(fig)

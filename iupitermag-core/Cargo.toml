@@ -1,0 +1,13 @@
+[package]
+name = "iupitermag"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "Rust library for decoding and encoding NASA CDF files."
+readme = "README.md"
+repository = "https://github.com/ysar/cdf-rs.git"
+categories = ["Science"]
+
+[dependencies]
+lazyivy = "0.6.4"
+ndarray = { version = "0.17.2", features = ["rayon"] }

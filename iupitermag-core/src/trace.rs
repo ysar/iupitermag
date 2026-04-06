@@ -1,39 +1,16 @@
 use std::f64;
 
-use crate::currentsheet::{CurrentSheetField, PyCurrentSheetField};
+use crate::currentsheet::CurrentSheetField;
 use crate::field::Field;
-use crate::internal::{InternalField, PyInternalField};
+use crate::internal::InternalField;
 use lazyivy::{RungeKutta, RungeKuttaMethod};
 use ndarray::{Array1, Array2, ArrayView1};
-use numpy::{IntoPyArray, PyReadonlyArray2};
-use pyo3::{pyfunction, types::PyList, Bound, PyResult, Python};
 
 const R_TRACE_MAXIMUM: f64 = 200.;
 
-#[pyfunction]
-pub fn trace_field_to_planet<'py>(
-    py: Python<'py>,
-    positions: PyReadonlyArray2<f64>,
-    internal_field: Bound<'py, PyInternalField>,
-    currentsheet_field: Bound<'py, PyCurrentSheetField>,
-) -> PyResult<Bound<'py, PyList>> {
-    let pos_arr = positions.as_array();
-
-    let mut traces = vec![];
-
-    let internal = internal_field.borrow();
-    let currentsheet = currentsheet_field.borrow();
-
-    for pos in pos_arr.rows() {
-        traces.push(
-            _trace_field_to_planet(pos.to_owned(), &internal.field, &currentsheet.field)
-                .into_pyarray(py),
-        )
-    }
-    PyList::new(py, traces)
-}
-
-fn _trace_field_to_planet(
+/// Function to trace field lines from a starting position to the planet,
+/// both along and against the field. Returns the coordinates for the entire closed field line.
+pub fn trace_field_to_planet(
     start_position: Array1<f64>,
     internal_field: &InternalField,
     currentsheet_field: &CurrentSheetField,
@@ -128,5 +105,39 @@ impl Field for PlanetField {
         let b_internal = self.internal_field.calc_field(r, theta, phi);
         let b_currentsheet = self.currentsheet_field.calc_field(r, theta, phi);
         b_internal + b_currentsheet
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_trace_to_planet() {
+        use crate::currentsheet::{CurrentSheetField, IntegrationType};
+        use crate::internal::InternalField;
+        use crate::trace::trace_field_to_planet;
+        use ndarray::Array;
+
+        let internal_field = InternalField::new("JRM33", None, None, Some(10));
+
+        let currentsheet_field =
+            CurrentSheetField::new("CON2020".to_string(), None, IntegrationType::Analytic);
+
+        let start_position = Array::from_vec(vec![-10.0, 2.0, 3.0]);
+        let val = trace_field_to_planet(start_position, &internal_field, &currentsheet_field);
+
+        let val_test = Array::from_vec(vec![
+            -0.5281993369952284,
+            -0.014597058630052442,
+            0.7703320906597539,
+        ]);
+
+        for (v1, v2) in val.row(0).iter().zip(val_test.iter()) {
+            assert!(
+                (v1 - v2) < 1e-4,
+                "Internal Field Test Fail: \n Calculated {:?}, Expected {:?}",
+                val,
+                val_test
+            );
+        }
     }
 }

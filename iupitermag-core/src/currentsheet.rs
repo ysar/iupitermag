@@ -1,51 +1,13 @@
-use ndarray::{Array1, ArrayView1};
-use numpy::{IntoPyArray, PyArray1, PyArray2, PyReadonlyArray2};
-use pyo3::{
-    prelude::PyAnyMethods, pyclass, pymethods, types::IntoPyDict, types::PyDict, Bound, PyAny,
-    PyResult, Python,
-};
+use ndarray::Array1;
 use std::collections::HashMap;
 use std::f64::consts::PI;
 
 use crate::convert;
 use crate::field::Field;
-use crate::impl_field_methods;
 
 const SMOOTHING_DELTA_RHO: f64 = 1.0;
 
-#[pyclass]
-pub struct PyCurrentSheetField {
-    pub field: CurrentSheetField,
-}
-
-#[pymethods]
-impl PyCurrentSheetField {
-    #[new]
-    pub fn __init__(field_type: String, pyparams: Bound<'_, PyAny>, integration: String) -> Self {
-        let params: HashMap<String, f64> = pyparams.extract().unwrap();
-
-        let integration_type = match integration.to_lowercase().as_str() {
-            "analytic" => IntegrationType::Analytic,
-            "integral" => IntegrationType::Integral,
-            _ => panic!("Unrecognized integration type. Allowed - analytic, integral ."),
-        };
-
-        PyCurrentSheetField {
-            field: CurrentSheetField::new(field_type, Some(params), integration_type),
-        }
-    }
-}
-
-impl_field_methods!(PyCurrentSheetField);
-
-#[pymethods]
-impl PyCurrentSheetField {
-    // Get parameters for a field model
-    pub fn get_params<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
-        self.field.get_params().into_py_dict(py)
-    }
-}
-
+/// Struct defining a current sheet field.
 #[derive(Clone)]
 pub struct CurrentSheetField {
     r_0: f64,
@@ -59,6 +21,7 @@ pub struct CurrentSheetField {
 }
 
 impl CurrentSheetField {
+    /// Instantiate a new `CurrentSheetField` object.
     pub fn new(
         field_type: String,
         params: Option<HashMap<String, f64>>,
@@ -166,19 +129,20 @@ impl CurrentSheetField {
         Array1::from_vec(vec![b_rho, b_phi, b_z])
     }
 
-    fn _calc_field_integral(&self, rho: f64, z: f64, a: f64) -> Array1<f64> {
+    fn _calc_field_integral(&self, _rho: f64, _z: f64, _a: f64) -> Array1<f64> {
         unimplemented!();
-        let b_rho: f64;
-        let b_phi: f64;
-        let b_z: f64;
+        // let b_rho: f64;
+        // let b_phi: f64;
+        // let b_z: f64;
 
-        b_rho = f64::NAN;
-        b_phi = f64::NAN;
-        b_z = f64::NAN;
+        // b_rho = f64::NAN;
+        // b_phi = f64::NAN;
+        // b_z = f64::NAN;
 
-        Array1::from_vec(vec![b_rho, b_phi, b_z])
+        // Array1::from_vec(vec![b_rho, b_phi, b_z])
     }
 
+    /// Return the parameters for the current sheet model.
     pub fn get_params(&self) -> HashMap<&str, f64> {
         HashMap::from([
             ("r_0", self.r_0),
@@ -220,15 +184,45 @@ impl Field for CurrentSheetField {
         let b_mag = convert::vec_rpz_to_xyz(b_mag_rpz.view(), &phi_mag);
 
         // Convert (Bx, By, Bz)_MAG to (Bx, By, Bz)_IAU
-        let b_iau = convert::vec_mag_to_iau(b_mag.view(), self.theta_d, self.phi_d);
-
-        b_iau
+        convert::vec_mag_to_iau(b_mag.view(), self.theta_d, self.phi_d)
     }
 }
 
 /// How to perform the integration to calculate the magnetic field contribution of the current sheet.
 #[derive(Clone)]
 pub enum IntegrationType {
+    /// Analytic integration using the Edwards et al. approximation.
     Analytic,
+    /// Numerical integration (currently unimplemented).
     Integral,
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_calc_currentsheet_field() {
+        use crate::currentsheet::{CurrentSheetField, IntegrationType};
+        use crate::field::Field;
+        use ndarray::Array;
+
+        let currentsheet_field =
+            CurrentSheetField::new("CON2020".to_string(), None, IntegrationType::Analytic);
+
+        let val = currentsheet_field.calc_field_xyz(20.2356, 1.31, -6.51);
+
+        let val_test = Array::from_vec(vec![
+            -31.20696232159909,
+            1.5313932557579142,
+            23.601574615533657,
+        ]);
+
+        for (v1, v2) in val.iter().zip(val_test.iter()) {
+            assert!(
+                (v1 - v2) < 1e-4,
+                "Internal Field Test Fail: \n Calculated {:?}, Expected {:?}",
+                val,
+                val_test
+            );
+        }
+    }
 }

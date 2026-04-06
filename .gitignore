@@ -1,9 +1,14 @@
 # Rust
-/target
+*/target
 Cargo.lock
 
 # Python
+target/
 *__pycache__*
 *.so
 .ipynb_checkpoints
 *.ipynb
+
+# Misc
+*con2020.py
+*_coefficients.txt

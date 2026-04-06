@@ -13,8 +13,22 @@ def plot_jupiter(ax, **kwargs):
 
 
 if __name__ == "__main__":
-    internal_field = im.InternalField("JRM33")
-    cs_field = im.CurrentSheetField("CON2020")
+    # Create a new axially aligned dipole field using Schmidt coefficients.
+    internal_field = im.InternalField(
+        "Custom",
+        g=np.array([[0.0, 0.0], [410993.4, 0.0]]),
+        h=np.array([[0.0, 0.0], [0.0, 0.0]]),
+    )
+
+    # Get parameters for CON2020
+    con2020_field = im.CurrentSheetField("CON2020")
+    params = con2020_field.get_params()
+
+    # Change current sheet tilt to 0.0
+    params["theta_d"] = 0.0
+
+    # Define a modified current sheet field based on CON2020 parameters.
+    currentsheet_field = im.CurrentSheetField("Custom", params=params)
 
     starting_positions = np.array(
         [
@@ -29,7 +43,9 @@ if __name__ == "__main__":
         ]
     )
 
-    trace = im.trace_field_to_planet(starting_positions, internal_field, cs_field)
+    trace = im.trace_field_to_planet(
+        starting_positions, internal_field, currentsheet_field
+    )
 
     fig, ax = plt.subplots(1, 1, figsize=(6, 3), dpi=200)
     for t in trace:
@@ -40,6 +56,8 @@ if __name__ == "__main__":
     ax.set_xlabel(r"X [R$_J$]")
     ax.set_ylabel(r"Z [R$_J$]")
     ax.set_aspect("equal")
-    fig.savefig("images/traced_field_lines.png", facecolor="k", bbox_inches="tight")
+    fig.savefig(
+        "../images/traced_field_lines_custom.png", facecolor="k", bbox_inches="tight"
+    )
     plt.show()
     plt.close(fig)
