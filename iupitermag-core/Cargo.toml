@@ -1,6 +1,6 @@
 [package]
 name = "iupitermag"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 license = "MIT"
 description = "Rust crate for modeling Jupiter's internal and current sheet magnetic fields."
