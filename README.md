@@ -35,8 +35,9 @@ Many other public codes do this or something similar,
 
 ### Installing using wheels on PyPI
 
-If you are on Python versions 3.12, 3.13 or 3.14, you can install directly using the wheels hosted 
-on PyPI. This does not require you to install the Rust toolchain.
+Because of breaking changes in `numpy` 2.0-2.4, the minimum supported Python version is 3.11. If 
+you are on Python versions >=3.11, you can install directly using the wheels hosted on PyPI. This 
+does not require you to install the Rust toolchain.
 
 ```shell
 pip install iupitermag
@@ -65,6 +66,8 @@ uv pip install .
 ### Installing from source using `maturin`
 
 ```shell
+git clone https://github.com/ysar/iupitermag.git --depth=1
+cd iupitermag
 maturin develop --release
 ```
 
