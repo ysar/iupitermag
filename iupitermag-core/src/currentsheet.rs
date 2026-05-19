@@ -219,7 +219,7 @@ mod tests {
         for (v1, v2) in val.iter().zip(val_test.iter()) {
             assert!(
                 (v1 - v2) < 1e-4,
-                "Internal Field Test Fail: \n Calculated {:?}, Expected {:?}",
+                "Currentsheet Field Test Failed: \n Calculated {:?}, Expected {:?}",
                 val,
                 val_test
             );

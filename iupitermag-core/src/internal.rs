@@ -283,7 +283,7 @@ mod tests {
         for i in 0..3 {
             assert!(
                 (val[i] - val_test[i]) < 1e-4,
-                "Internal Field Test Fail: \n Calculated {:?}, Expected {:?}",
+                "Internal Field Test Failed: \n Calculated {:?}, Expected {:?}",
                 val,
                 val_test
             );

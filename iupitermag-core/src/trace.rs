@@ -134,7 +134,7 @@ mod tests {
         for (v1, v2) in val.row(0).iter().zip(val_test.iter()) {
             assert!(
                 (v1 - v2) < 1e-4,
-                "Internal Field Test Fail: \n Calculated {:?}, Expected {:?}",
+                "Tracing Test Failed: \n Calculated {:?}, Expected {:?}",
                 val,
                 val_test
             );
