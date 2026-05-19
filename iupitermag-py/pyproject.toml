@@ -1,12 +1,12 @@
 [project]
 name = "iupitermag"
-version = "0.2.1"
+version = "0.2.2"
 description = "Python package with Rust bindings to calculate the magnetic field in Jupiter's magnetosphere."
 readme = "README.md"
 authors = [
     { name = "Yash Sarkango" }
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 dependencies = [
     "numpy>=2.4.2",
 ]

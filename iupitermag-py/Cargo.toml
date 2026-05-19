@@ -1,6 +1,6 @@
 [package]
 name = "iupitermag-py"
-version = "0.2.0"
+version = "0.2.2"
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -12,4 +12,4 @@ crate-type = ["cdylib"]
 iupitermag = { path = "../iupitermag-core" }
 ndarray = { version = "0.17.2", features = ["rayon"] }
 numpy = { version = "0.28.0" }
-pyo3 = { version = "0.28.2", features = ["extension-module", "abi3-py312", "multiple-pymethods"] }
+pyo3 = { version = "0.28.2", features = ["extension-module", "abi3-py311", "multiple-pymethods"] }
