@@ -60,14 +60,14 @@ uv add iupitermag
 
 ```shell
 git clone https://github.com/ysar/iupitermag.git --depth=1
-cd iupitermag
+cd iupitermag/iupitermag-py
 uv pip install .
 ```
 ### Installing from source using `maturin`
 
 ```shell
 git clone https://github.com/ysar/iupitermag.git --depth=1
-cd iupitermag
+cd iupitermag/iupitermag-py
 maturin develop --release
 ```
 
