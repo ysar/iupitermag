@@ -1,5 +1,4 @@
 use std::f64::consts::PI;
-
 use ndarray::{Array1, Array2, ArrayView1, AsArray};
 
 /// Converts a vector of cartesian coordinates to spherical coordinates.
