@@ -3,7 +3,7 @@ use iupitermag::field::Field;
 use iupitermag::internal::InternalField;
 use numpy::ndarray::Array2;
 use numpy::{IntoPyArray, PyArray1, PyArray2, PyArrayMethods, PyReadonlyArray2};
-use pyo3::{pyclass, pymethods, Bound, Python};
+use pyo3::{Bound, Python, pyclass, pymethods};
 
 // #[derive(Clone)]
 #[pyclass]

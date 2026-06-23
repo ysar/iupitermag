@@ -2,7 +2,7 @@ use crate::currentsheet::PyCurrentSheetField;
 use crate::internal::PyInternalField;
 use iupitermag::trace;
 use numpy::{IntoPyArray, PyReadonlyArray2};
-use pyo3::{pyfunction, types::PyList, Bound, PyResult, Python};
+use pyo3::{Bound, PyResult, Python, pyfunction, types::PyList};
 use std::f64;
 
 #[pyfunction]

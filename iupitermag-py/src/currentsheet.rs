@@ -1,8 +1,8 @@
 use iupitermag::currentsheet::{CurrentSheetField, IntegrationType};
 use numpy::{IntoPyArray, PyArray1, PyArray2, PyReadonlyArray2};
 use pyo3::{
-    prelude::PyAnyMethods, pyclass, pymethods, types::IntoPyDict, types::PyDict, Bound, PyAny,
-    PyResult, Python,
+    Bound, PyAny, PyResult, Python, prelude::PyAnyMethods, pyclass, pymethods, types::IntoPyDict,
+    types::PyDict,
 };
 use std::collections::HashMap;
 
