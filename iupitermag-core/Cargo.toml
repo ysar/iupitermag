@@ -1,6 +1,6 @@
 [package]
 name = "iupitermag"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 license = "MIT"
 description = "Rust crate for modeling Jupiter's internal and current sheet magnetic fields."
@@ -9,5 +9,5 @@ repository = "https://github.com/ysar/iupitermag.git"
 categories = ["science"]
 
 [dependencies]
-lazyivy = "0.6.4"
+lazyivy = "0.6.5"
 ndarray = { version = "0.17.2", features = ["rayon"] }
