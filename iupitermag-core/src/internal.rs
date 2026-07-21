@@ -109,24 +109,25 @@ impl Field for InternalField {
             cosphi_prev = 1.;
 
             let i_i32 = i32::try_from(i).unwrap();
+            let a_pow_iplus2 = a.powi(i_i32 + 2);
 
-            b_r += a.powi(i_i32 + 2) * (i + 1) as f64 * p[[i, 0]] * g[[i, 0]];
-            b_theta -= a.powi(i_i32 + 2) * dp[[i, 0]] * g[[i, 0]];
+            b_r += a_pow_iplus2 * (i + 1) as f64 * p[[i, 0]] * g[[i, 0]];
+            b_theta -= a_pow_iplus2 * dp[[i, 0]] * g[[i, 0]];
 
             for j in 1..i + 1 {
                 sin_mphi = sinphi_prev * cosphi + cosphi_prev * sinphi;
                 cos_mphi = cosphi_prev * cosphi - sinphi_prev * sinphi;
 
-                b_r += a.powi(i_i32 + 2)
+                b_r += a_pow_iplus2
                     * (i + 1) as f64
                     * p[[i, j]]
                     * (g[[i, j]] * cos_mphi + h[[i, j]] * sin_mphi);
 
                 b_theta -=
-                    a.powi(i_i32 + 2) * dp[[i, j]] * (g[[i, j]] * cos_mphi + h[[i, j]] * sin_mphi);
+                    a_pow_iplus2 * dp[[i, j]] * (g[[i, j]] * cos_mphi + h[[i, j]] * sin_mphi);
 
                 b_phi += inv_sintheta
-                    * a.powi(i_i32 + 2)
+                    * a_pow_iplus2
                     * p[[i, j]]
                     * j as f64
                     * (g[[i, j]] * sin_mphi - h[[i, j]] * cos_mphi);
